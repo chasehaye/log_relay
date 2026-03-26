@@ -81,7 +81,7 @@ func CreateReceiver(c *gin.Context, db *gorm.DB) {
 
 type LoginInput struct {
 	ReceiverEmail string `json:"email" binding:"required,email"`
-	Password      string `json:"password"`
+	Password      string `json:"password" binding:"required"` 
 }
 
 func LoginReceiver(c *gin.Context, db *gorm.DB) {
@@ -105,9 +105,15 @@ func LoginReceiver(c *gin.Context, db *gorm.DB) {
         return
     }
 
+	jwtToken, err := services.GenerateJWT(receiver.ID, receiver.ReceiverEmail)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create session"})
+        return
+    }
+
 	c.JSON(http.StatusOK, gin.H{
         "message":   "Login successful",
-        "api_token": receiver.Token,
+		"token":     jwtToken,
         "is_admin":  receiver.IsAdmin,
 		// can return email or name if ever needed
     })
