@@ -17,7 +17,7 @@ type RegisterInput struct {
 	ReceiverEmail string `json:"email" binding:"required,email"`
 	Password      string `json:"password" binding:"required,min=8"`
 }
-
+// IN THE FUTURE MAKE IT SO THAT I HAVE TO APPROVE CREATION ON ADMIN END
 func CreateReceiver(c *gin.Context, db *gorm.DB) {
 	var inputData RegisterInput
 
@@ -73,7 +73,7 @@ func CreateReceiver(c *gin.Context, db *gorm.DB) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Registration successful",
-		"api_token":   token,
+		"api_token": token,
 		"is_admin": isAdmin,
 		// can return email or name if ever needed
 	})
@@ -112,12 +112,55 @@ func LoginReceiver(c *gin.Context, db *gorm.DB) {
     }
 
 	c.JSON(http.StatusOK, gin.H{
-        "message":   "Login successful",
-		"token":     jwtToken,
-        "is_admin":  receiver.IsAdmin,
+        "message": "Login successful",
+		"token": jwtToken,
+        "is_admin": receiver.IsAdmin,
 		// can return email or name if ever needed
     })
 }
 
+type CycleInput struct {
+	ReceiverEmail string `json:"email" binding:"required,email"`
+	Password      string `json:"password" binding:"required"`
+}
+
+func CycleToken(c *gin.Context, db *gorm.DB) {
+	var input CycleInput
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	cleanEmail := strings.ToLower(strings.TrimSpace(input.ReceiverEmail))
+	
+	var receiver models.Receiver
+	if err := db.Where("receiver_email = ?", cleanEmail).First(&receiver).Error; err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+        return
+    }
+
+	if err := services.ComparePassword(receiver.Password, input.Password); err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+        return
+    }
+
+	newToken, err := services.GenerateToken()
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate secure token"})
+        return
+    }
+
+	if err := db.Model(&receiver).Update("token", newToken).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update token in database"})
+        return
+    }
+
+	c.JSON(http.StatusOK, gin.H{
+        "message": "API Token cycled successfully",
+        "api_token": newToken,
+        "note": "All previous static tokens are now invalid.",
+    })
+}
 
 // add a cycle token option

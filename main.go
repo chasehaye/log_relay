@@ -47,6 +47,7 @@ func main() {
     r.GET("/status", func(c *gin.Context) {handlers.Ping(c, db)})
     r.POST("/user/register", func(c *gin.Context) {handlers.CreateReceiver(c, db)})
     r.POST("/user/login", func(c *gin.Context) {handlers.LoginReceiver(c, db)})
+    r.POST("/user/cycle-token", func(c *gin.Context) {handlers.CycleToken(c, db)})
 
     r.Run() // Default is port 8080
 
