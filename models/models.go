@@ -33,5 +33,6 @@ type Receiver struct {
     Password      string    `gorm:"not null" json:"-"`
     Token         string    `gorm:"type:text"`
     ReceiverEmail string    `gorm:"uniqueIndex;type:varchar(255);not null"`
+	IsAdmin       bool      `gorm:"default:false"`
     Messages      []Message `gorm:"foreignKey:ReceiverID"` // Inbox
 }

@@ -43,8 +43,8 @@ func main() {
     log.Println("--Connected---------------------")
     r := gin.Default()
     
-    // Pass your db to your handlers here...
-    r.GET("/ping", handlers.Ping)
+    // Pass db to handlers 
+    r.GET("/status", func(c *gin.Context) {handlers.Ping(c, db)})
 
     r.Run() // Default is port 8080
 
