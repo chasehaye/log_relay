@@ -1,14 +1,51 @@
 package main
 
 import (
-    "log_relay/handlers"
+    "log"
+    "os"
+
     "github.com/gin-gonic/gin"
+    "github.com/joho/godotenv"
+
+    "log_relay/database"
+    "log_relay/models"
+    "log_relay/handlers"
 )
 
 func main() {
-    r := gin.Default()
+    err := godotenv.Load()
+    if err != nil {
+        log.Fatal("Error loading .env file")
+    }
+    dbPassword := os.Getenv("POSTGRESQL_PASS")
+    dbUser, dbName := "postgres", "log_relay"
 
+    db, err := database.ConnectToDB(dbUser, dbPassword, dbName)
+    if err != nil {
+        log.Fatalln("Failed to connect to database:", err)
+    }
+    
+    sqlDB, err := db.DB()
+    if err != nil {
+        log.Fatalln("Failed to get generic database object:", err)
+    }
+    if err := sqlDB.Ping(); err != nil {
+        log.Fatalln("Database unreachable:", err)
+    }
+    defer sqlDB.Close()
+    log.Println("--Database connection verified--")
+
+    err = db.AutoMigrate(&models.Sender{}, &models.Receiver{}, &models.Message{})
+    if err != nil {
+        log.Fatalf("Migration failed: %v", err)
+    }
+    log.Println("--Database migration successful-")
+    log.Println("--Connected---------------------")
+    r := gin.Default()
+    
+    // Pass your db to your handlers here...
     r.GET("/ping", handlers.Ping)
 
-    r.Run() // listens on :8080 by default
+    r.Run() // Default is port 8080
+
 }
