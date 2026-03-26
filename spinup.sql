@@ -23,7 +23,7 @@ CREATE TABLE sender (
 
 CREATE TABLE message (
     id SERIAL PRIMARY KEY,
-    sender_id INT NOT NULL REFERENCES sender(id) ON DELETE SET NULL,
+    sender_id INT REFERENCES sender(id) ON DELETE SET NULL,
     receiver_id INT NOT NULL REFERENCES receiver(id) ON DELETE CASCADE,
     header VARCHAR(255),
     body TEXT NOT NULL,
