@@ -8,3 +8,8 @@
 
 
 --- add logging locally for server
+
+--- mailing list and mail receiver implementation as the core
+
+--- consider doing enum for fields
+--- add emailing and loggig rates like burst daily or slow
