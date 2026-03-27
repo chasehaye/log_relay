@@ -1,1 +1,1 @@
-add messaging based features have the handlers plug into this
+refactor the password reset page

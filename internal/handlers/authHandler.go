@@ -217,6 +217,7 @@ func ForgotPassword(c *gin.Context, db *gorm.DB){
 	fmt.Print("AFTER")
     c.JSON(http.StatusOK, gin.H{"message": "Check your inbox for a reset link"})
 }
+
 func ResetPassword(c *gin.Context, db *gorm.DB){
 // use the token given to search the database from all the present tokens
 // then reset the password for the user

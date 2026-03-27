@@ -18,7 +18,7 @@ func main() {
         log.Fatal("Error loading .env file")
     }
     dbPassword := os.Getenv("POSTGRESQL_PASS")
-    dbUser, dbName := "postgres", "log_relay"
+    dbUser, dbName := os.Getenv("POSTGRESQL_USER"), "log_relay"
 
     db, err := database.ConnectToDB(dbUser, dbPassword, dbName)
     if err != nil {
