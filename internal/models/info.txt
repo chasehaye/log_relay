@@ -1,0 +1,8 @@
+mailing list struct linked to receiver
+mailing list member linked to mailing list
+
+add an admin strut will be a one off with settings that I can adjust
+
+add fields to receiver AKA user to have different mailing mode options lke single burst none
+
+||| Look into ENUM with Go

@@ -1,6 +1,7 @@
 package models
 
 import (
+    "time"
     "gorm.io/gorm"
 )
 
@@ -37,5 +38,10 @@ type Receiver struct {
     Messages      []Message `gorm:"foreignKey:ReceiverID"` // Inbox
 }
 
-// mailing list struct linked to reciever
-// mailing list memeber linked to mailing list
+type PasswordReset struct {
+    gorm.Model
+    UserID    uint      `gorm:"index"`
+    Token     string    `gorm:"uniqueIndex"`
+    ExpiresAt time.Time `gorm:"index"`
+    Used      bool      `gorm:"default:false"`
+}

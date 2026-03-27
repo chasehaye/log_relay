@@ -7,9 +7,9 @@ import (
     "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
 
-    "log_relay/database"
-    "log_relay/models"
-    "log_relay/handlers"
+    "log_relay/internal/database"
+    "log_relay/internal/models"
+    "log_relay/internal/handlers"
 )
 
 func main() {
@@ -35,7 +35,7 @@ func main() {
     defer sqlDB.Close()
     log.Println("--Database connection verified--")
 
-    err = db.AutoMigrate(&models.Sender{}, &models.Receiver{}, &models.Message{})
+    err = db.AutoMigrate(&models.Sender{}, &models.Receiver{}, &models.Message{}, &models.PasswordReset{},)
     if err != nil {
         log.Fatalf("Migration failed: %v", err)
     }
@@ -48,7 +48,9 @@ func main() {
     r.POST("/user/register", func(c *gin.Context) {handlers.CreateReceiver(c, db)})
     r.POST("/user/login", func(c *gin.Context) {handlers.LoginReceiver(c, db)})
     r.POST("/user/cycle-token", func(c *gin.Context) {handlers.CycleToken(c, db)})
+    r.POST("/user/reset-password", func(c *gin.Context) {handlers.ForgotPassword(c, db)})
 
+    
     r.Run() // Default is port 8080
 
 }

@@ -4,12 +4,15 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"log_relay/models"
-	"log_relay/services"
+	"log_relay/internal/models"
+	"log_relay/internal/services"
+	"log_relay/internal/messaging"
 )
 
 type RegisterInput struct {
@@ -17,8 +20,8 @@ type RegisterInput struct {
 	ReceiverEmail string `json:"email" binding:"required,email"`
 	Password      string `json:"password" binding:"required,min=8"`
 }
-// FORGOT change password should send an email with a link that allows this
-// 2FA?
+
+// receiver is user for reference pardon the poor naming convention
 // IN THE FUTURE MAKE IT SO THAT I HAVE TO APPROVE CREATION ON ADMIN END
 func CreateReceiver(c *gin.Context, db *gorm.DB) {
 	var inputData RegisterInput
@@ -163,4 +166,59 @@ func CycleToken(c *gin.Context, db *gorm.DB) {
         "api_token": newToken,
         "note": "All previous static tokens are now invalid.",
     })
+}
+
+type emailInput struct {
+	ReceiverEmail string `json:"email" binding:"required,email"`
+}
+
+func ForgotPassword(c *gin.Context, db *gorm.DB){
+	var input emailInput
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	cleanEmail := strings.ToLower(strings.TrimSpace(input.ReceiverEmail))
+
+	var user models.Receiver
+	if err := db.Where("receiver_email = ?", cleanEmail).First(&user).Error; err != nil {
+		// Security: don't reveal if email exists
+		c.JSON(http.StatusOK, gin.H{"message": "Check your inbox for a reset link"})
+		return
+	}
+
+	token, err := services.GenerateToken()
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
+        return
+    }
+
+	db.Model(&models.PasswordReset{}).
+        Where("user_id = ? AND used = ?", user.ID, false).
+        Update("used", true)
+    resetRecord := models.PasswordReset{
+        UserID:    user.ID,
+        Token:     token,
+        ExpiresAt: time.Now().Add(15 * time.Minute),
+    }
+    if err := db.Create(&resetRecord).Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create reset link"})
+        return
+    }
+    frontendURL := strings.TrimSuffix(os.Getenv("FRONTEND_URL"), "/")
+    resetLink := fmt.Sprintf("%s/reset-password?token=%s", frontendURL, token)
+
+    if err := messaging.SendResetEmail(cleanEmail, resetLink); err != nil {
+        db.Delete(&resetRecord)
+        c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Email service unavailable"})
+        return
+    }
+	fmt.Print("AFTER")
+    c.JSON(http.StatusOK, gin.H{"message": "Check your inbox for a reset link"})
+}
+func ResetPassword(c *gin.Context, db *gorm.DB){
+// use the token given to search the database from all the present tokens
+// then reset the password for the user
+// return a new jwt session token
 }

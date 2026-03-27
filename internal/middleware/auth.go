@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 	"strings"
-	"log_relay/services"
+	"log_relay/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
