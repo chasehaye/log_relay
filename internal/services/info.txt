@@ -1,1 +1,0 @@
-add password strength checking

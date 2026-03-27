@@ -261,6 +261,47 @@ func ResetPassword(c *gin.Context, db *gorm.DB) {
     })
 }
 
-// add a route for logout
-// add a route for email verification
-// admin approval down the road in the future before adding payment
+func LogOut(c *gin.Context, db *gorm.DB) {
+    var input struct {
+        Email string `json:"email" binding:"required,email"`
+    }
+
+    if err := c.ShouldBindJSON(&input); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+    cleanEmail := strings.ToLower(strings.TrimSpace(input.Email))
+    var user models.User
+    if err := db.Where("email = ?", cleanEmail).First(&user).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+        return
+    }
+
+    if user.Token == "" {
+        c.JSON(http.StatusOK, gin.H{"message": "Already logged out"})
+        return
+    }
+
+    if err := db.Model(&user).Update("token", "").Error; err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to log out"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "message": "Successfully logged out",
+    })
+}
+
+
+
+// ______below is the standard to refactor what is above_______________
+
+
+
+
+// auth and logging considerations
+
+// cleaning data
+// helper functions and data manipulation from data
+// database transaction / execution
+// response

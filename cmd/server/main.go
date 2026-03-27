@@ -50,6 +50,7 @@ func main() {
     r.POST("/user/cycle-token", func(c *gin.Context) {handlers.CycleToken(c, db)})
     r.POST("/user/reset-password", func(c *gin.Context) {handlers.ForgotPassword(c, db)})
     r.POST("/user/change-password/:token", func(c *gin.Context) {handlers.ResetPassword(c, db)})
+    r.POST("/user/logout", func(c *gin.Context) {handlers.LogOut(c, db)})
     
     r.Run() // Default is port 8080
 
