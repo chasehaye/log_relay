@@ -29,12 +29,10 @@ func SendMailAWS(to, subject, body string) error {
 
     auth := smtp.PlainAuth("", user, password, host)
 
-    fmt.Printf("Attempting to send email to %s via AWS SES...\n", to)
 	err := smtp.SendMail(addr, auth, from, []string{to}, []byte(messageStr))
 	if err != nil {
 		return fmt.Errorf("AWS SES send failed: %w", err)
 	}
 
-	fmt.Println("Email sent successfully!")
 	return nil
 }

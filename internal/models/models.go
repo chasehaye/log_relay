@@ -16,8 +16,8 @@ type Message struct {
     Importance    string `gorm:"type:varchar(30)"`
 
     // Relationships
-    Sender   Sender   `gorm:"foreignKey:SenderID"`
-    Receiver Receiver `gorm:"foreignKey:ReceiverID"`
+    Sender   Sender  `gorm:"foreignKey:SenderID"`
+    Receiver User    `gorm:"foreignKey:ReceiverID"`
 }
 
 type Sender struct {
@@ -28,14 +28,14 @@ type Sender struct {
     Messages     []Message `gorm:"foreignKey:SenderID"` // Outbox
 }
 
-type Receiver struct {
+type User struct {
     gorm.Model    
-    Name          string    `gorm:"type:varchar(255)"`
-    Password      string    `gorm:"not null" json:"-"`
-    Token         string    `gorm:"type:text"`
-    ReceiverEmail string    `gorm:"uniqueIndex;type:varchar(255);not null"`
-	IsAdmin       bool      `gorm:"default:false"`
-    Messages      []Message `gorm:"foreignKey:ReceiverID"` // Inbox
+    Name      string    `gorm:"type:varchar(255)"`
+    Password  string    `gorm:"not null" json:"-"`
+    Token     string    `gorm:"type:text"`
+    Email     string    `gorm:"uniqueIndex;type:varchar(255);not null"`
+	IsAdmin   bool      `gorm:"default:false"`
+    Messages  []Message `gorm:"foreignKey:ReceiverID"` // Inbox
 }
 
 type PasswordReset struct {
@@ -44,4 +44,5 @@ type PasswordReset struct {
     Token     string    `gorm:"uniqueIndex"`
     ExpiresAt time.Time `gorm:"index"`
     Used      bool      `gorm:"default:false"`
+    User      User      `gorm:"foreignKey:UserID"`
 }

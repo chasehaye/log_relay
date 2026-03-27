@@ -15,24 +15,20 @@ import (
 	"log_relay/internal/messaging"
 )
 
-type RegisterInput struct {
-	Name          string `json:"name"`
-	ReceiverEmail string `json:"email" binding:"required,email"`
-	Password      string `json:"password" binding:"required,min=8"`
-}
+func CreateUser(c *gin.Context, db *gorm.DB) {
+	var input struct {
+        Name     string `json:"name"`
+        Email    string `json:"email" binding:"required,email"`
+        Password string `json:"password" binding:"required,min=8"`
+    }
 
-// receiver is user for reference pardon the poor naming convention
-// IN THE FUTURE MAKE IT SO THAT I HAVE TO APPROVE CREATION ON ADMIN END
-func CreateReceiver(c *gin.Context, db *gorm.DB) {
-	var inputData RegisterInput
-
-	if err := c.ShouldBindJSON(&inputData); err != nil {
+	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	cleanEmail := strings.ToLower(strings.TrimSpace(inputData.ReceiverEmail))
-	displayName := strings.TrimSpace(inputData.Name)
+	cleanEmail := strings.ToLower(strings.TrimSpace(input.Email))
+	displayName := strings.TrimSpace(input.Name)
 
 	if displayName == "" {
 		displayName = "User" 
@@ -48,7 +44,7 @@ func CreateReceiver(c *gin.Context, db *gorm.DB) {
         }
         return
     }
-	hashedPassword, err := services.HashPassword(inputData.Password)
+	hashedPassword, err := services.HashPassword(input.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "An unexpected error occurred. Please try again later."})
 		return
@@ -64,14 +60,14 @@ func CreateReceiver(c *gin.Context, db *gorm.DB) {
 	if cleanEmail == os.Getenv("ADMIN_EMAIL") {
 		isAdmin = true
 	}
-	receiver := models.Receiver{
+	user := models.User{
 		Name:          displayName,
-		ReceiverEmail: cleanEmail,
+		Email:         cleanEmail,
 		Password:      string(hashedPassword),
 		Token:         token,
 		IsAdmin:       isAdmin,
 	}
-	if err := db.Create(&receiver).Error; err != nil {
+	if err := db.Create(&user).Error; err != nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Registration failed: Email already in use"})
 		return
 	}
@@ -80,37 +76,36 @@ func CreateReceiver(c *gin.Context, db *gorm.DB) {
 		"message": "Registration successful",
 		"api_token": token,
 		"is_admin": isAdmin,
-		// can return email or name if ever needed
+        "user_email": cleanEmail,
+        "user_name":  displayName,
 	})
 }
 
-type LoginInput struct {
-	ReceiverEmail string `json:"email" binding:"required,email"`
-	Password      string `json:"password" binding:"required"` 
-}
+func LoginUser(c *gin.Context, db *gorm.DB) {
+	var input struct {
+		Email    string `json:"email" binding:"required,email"`
+		Password string `json:"password" binding:"required"` 
+	}
 
-func LoginReceiver(c *gin.Context, db *gorm.DB) {
-	var inputData LoginInput
-
-	if err := c.ShouldBindJSON(&inputData); err != nil {
+	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	cleanEmail := strings.ToLower(strings.TrimSpace(inputData.ReceiverEmail))
+	cleanEmail := strings.ToLower(strings.TrimSpace(input.Email))
 	
-	var receiver models.Receiver
-	if err := db.Where("receiver_email = ?", cleanEmail).First(&receiver).Error; err != nil {
+	var user models.User
+	if err := db.Where("email = ?", cleanEmail).First(&user).Error; err != nil {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
         return
     }
 
-	if err := services.ComparePassword(receiver.Password, inputData.Password); err != nil {
+	if err := services.ComparePassword(user.Password, input.Password); err != nil {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
         return
     }
 
-	jwtToken, err := services.GenerateJWT(receiver.ID, receiver.ReceiverEmail)
+	jwtToken, err := services.GenerateJWT(user.ID, user.Email)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create session"})
         return
@@ -119,33 +114,32 @@ func LoginReceiver(c *gin.Context, db *gorm.DB) {
 	c.JSON(http.StatusOK, gin.H{
         "message": "Login successful",
 		"token": jwtToken,
-        "is_admin": receiver.IsAdmin,
-		// can return email or name if ever needed
+        "is_admin": user.IsAdmin,
+		"user_email": user.Email,
+        "user_name":  user.Name,
     })
 }
 
-type CycleInput struct {
-	ReceiverEmail string `json:"email" binding:"required,email"`
-	Password      string `json:"password" binding:"required"`
-}
-
 func CycleToken(c *gin.Context, db *gorm.DB) {
-	var input CycleInput
+	var input struct {
+        Email    string `json:"email" binding:"required,email"`
+        Password string `json:"password" binding:"required"`
+    }
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	cleanEmail := strings.ToLower(strings.TrimSpace(input.ReceiverEmail))
+	cleanEmail := strings.ToLower(strings.TrimSpace(input.Email))
 	
-	var receiver models.Receiver
-	if err := db.Where("receiver_email = ?", cleanEmail).First(&receiver).Error; err != nil {
+	var user models.User
+	if err := db.Where("email = ?", cleanEmail).First(&user).Error; err != nil {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
         return
     }
 
-	if err := services.ComparePassword(receiver.Password, input.Password); err != nil {
+	if err := services.ComparePassword(user.Password, input.Password); err != nil {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
         return
     }
@@ -156,33 +150,30 @@ func CycleToken(c *gin.Context, db *gorm.DB) {
         return
     }
 
-	if err := db.Model(&receiver).Update("token", newToken).Error; err != nil {
+	if err := db.Model(&user).Update("token", newToken).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update token in database"})
         return
     }
 
 	c.JSON(http.StatusOK, gin.H{
-        "message": "API Token cycled successfully",
+        "message": "API Token updated successfully",
         "api_token": newToken,
-        "note": "All previous static tokens are now invalid.",
     })
 }
 
-type emailInput struct {
-	ReceiverEmail string `json:"email" binding:"required,email"`
-}
-
 func ForgotPassword(c *gin.Context, db *gorm.DB){
-	var input emailInput
+	var input struct {
+        Email string `json:"email" binding:"required,email"`
+    }
 
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	cleanEmail := strings.ToLower(strings.TrimSpace(input.ReceiverEmail))
+	cleanEmail := strings.ToLower(strings.TrimSpace(input.Email))
 
-	var user models.Receiver
-	if err := db.Where("receiver_email = ?", cleanEmail).First(&user).Error; err != nil {
+	var user models.User
+	if err := db.Where("email = ?", cleanEmail).First(&user).Error; err != nil {
 		// Security: don't reveal if email exists
 		c.JSON(http.StatusOK, gin.H{"message": "Check your inbox for a reset link"})
 		return
@@ -200,26 +191,76 @@ func ForgotPassword(c *gin.Context, db *gorm.DB){
     resetRecord := models.PasswordReset{
         UserID:    user.ID,
         Token:     token,
-        ExpiresAt: time.Now().Add(15 * time.Minute),
+        ExpiresAt: time.Now().Add(5 * time.Minute),
     }
     if err := db.Create(&resetRecord).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create reset link"})
         return
     }
     frontendURL := strings.TrimSuffix(os.Getenv("FRONTEND_URL"), "/")
-    resetLink := fmt.Sprintf("%s/reset-password?token=%s", frontendURL, token)
-
+    resetLink := fmt.Sprintf("%s/reset-password/%s", frontendURL, token)
+    
     if err := messaging.SendResetEmail(cleanEmail, resetLink); err != nil {
         db.Delete(&resetRecord)
         c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Email service unavailable"})
         return
     }
-	fmt.Print("AFTER")
     c.JSON(http.StatusOK, gin.H{"message": "Check your inbox for a reset link"})
 }
 
-func ResetPassword(c *gin.Context, db *gorm.DB){
-// use the token given to search the database from all the present tokens
-// then reset the password for the user
-// return a new jwt session token
+func ResetPassword(c *gin.Context, db *gorm.DB) {
+    token := c.Param("token")
+    var input struct {
+        NewPassword string `json:"new_password" binding:"required,min=8"`
+    }
+
+    if err := c.ShouldBindJSON(&input); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid format"})
+        return
+    }
+    var resetRecord models.PasswordReset
+    if err := db.Preload("User").Where("token = ? AND used = ?", token, false).First(&resetRecord).Error; err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
+        return
+    }
+    if time.Now().After(resetRecord.ExpiresAt) {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Token expired"})
+        return
+    }
+
+    hashedPassword, err := services.HashPassword(input.NewPassword)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating password"})
+        return
+    }
+
+    err = db.Transaction(func(action *gorm.DB) error {
+        if err := action.Model(&models.User{}).Where("id = ?", resetRecord.UserID).Update("password", hashedPassword).Error; err != nil {
+            return err
+        }
+        if err := action.Model(&resetRecord).Update("used", true).Error; err != nil {
+            return err
+        }
+        return nil
+    })
+
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not complete password reset"})
+        return
+    }
+
+    sessionToken, err := services.GenerateJWT(resetRecord.UserID, resetRecord.User.Email)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Password updated, but failed to log in"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{
+        "message": "Password updated successfully",
+        "token":   sessionToken,
+    })
 }
+
+// add a route for logout
+// add a route for email verification
+// admin approval down the road in the future before adding payment

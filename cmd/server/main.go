@@ -35,7 +35,7 @@ func main() {
     defer sqlDB.Close()
     log.Println("--Database connection verified--")
 
-    err = db.AutoMigrate(&models.Sender{}, &models.Receiver{}, &models.Message{}, &models.PasswordReset{},)
+    err = db.AutoMigrate(&models.Sender{}, &models.User{}, &models.Message{}, &models.PasswordReset{},)
     if err != nil {
         log.Fatalf("Migration failed: %v", err)
     }
@@ -45,11 +45,11 @@ func main() {
     
     // Pass db to handlers 
     r.GET("/status", func(c *gin.Context) {handlers.Ping(c, db)})
-    r.POST("/user/register", func(c *gin.Context) {handlers.CreateReceiver(c, db)})
-    r.POST("/user/login", func(c *gin.Context) {handlers.LoginReceiver(c, db)})
+    r.POST("/user/register", func(c *gin.Context) {handlers.CreateUser(c, db)})
+    r.POST("/user/login", func(c *gin.Context) {handlers.LoginUser(c, db)})
     r.POST("/user/cycle-token", func(c *gin.Context) {handlers.CycleToken(c, db)})
     r.POST("/user/reset-password", func(c *gin.Context) {handlers.ForgotPassword(c, db)})
-
+    r.POST("/user/change-password/:token", func(c *gin.Context) {handlers.ResetPassword(c, db)})
     
     r.Run() // Default is port 8080
 
