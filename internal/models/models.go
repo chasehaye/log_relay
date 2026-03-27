@@ -36,3 +36,6 @@ type Receiver struct {
 	IsAdmin       bool      `gorm:"default:false"`
     Messages      []Message `gorm:"foreignKey:ReceiverID"` // Inbox
 }
+
+// mailing list struct linked to reciever
+// mailing list memeber linked to mailing list

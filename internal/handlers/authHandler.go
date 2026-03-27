@@ -17,6 +17,8 @@ type RegisterInput struct {
 	ReceiverEmail string `json:"email" binding:"required,email"`
 	Password      string `json:"password" binding:"required,min=8"`
 }
+// FORGOT change password should send an email with a link that allows this
+// 2FA?
 // IN THE FUTURE MAKE IT SO THAT I HAVE TO APPROVE CREATION ON ADMIN END
 func CreateReceiver(c *gin.Context, db *gorm.DB) {
 	var inputData RegisterInput
@@ -162,5 +164,3 @@ func CycleToken(c *gin.Context, db *gorm.DB) {
         "note": "All previous static tokens are now invalid.",
     })
 }
-
-// add a cycle token option
