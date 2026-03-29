@@ -28,3 +28,14 @@ func ValidateEmail(email string) error {
 
 	return nil
 }
+
+func HandleEmailError(err error) (int, string) {
+    switch err {
+    case ErrInvalidFormat:
+        return 400, "Invalid email format"
+    case ErrInvalidDomain:
+        return 400, "Email domain does not exist or cannot receive mail"
+    default:
+        return 500, "Verification service error"
+    }
+}

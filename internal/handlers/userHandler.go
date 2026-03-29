@@ -1,7 +1,6 @@
 package handlers
 
-// update
-// change password should send an email with a link that allows ths
+
 
 
 // once logged in
