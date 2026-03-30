@@ -64,7 +64,7 @@ func main() {
     r.POST("/api/user/register", func(c *gin.Context) {handlers.CreateUser(c, db)})
     r.POST("/api/user/login", func(c *gin.Context) {handlers.LoginUser(c, db)})
     r.POST("/api/user/cycle-token", func(c *gin.Context) {handlers.CycleToken(c, db)})
-    r.POST("/api/user/reset-password", func(c *gin.Context) {handlers.ForgotPassword(c, db)})
+    r.POST("/api/user/forgot-password", func(c *gin.Context) {handlers.ForgotPassword(c, db)})
     r.POST("/api/user/change-password/:token", func(c *gin.Context) {handlers.ResetPassword(c, db)})
     r.POST("/api/user/logout", func(c *gin.Context) {handlers.LogOut(c, db)})
 

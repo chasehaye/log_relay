@@ -8,11 +8,15 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func GenerateJWT(userID uint, email string) (string, error) {
-	_ = godotenv.Load() 
+var jwtSecret []byte
 
+func init() {
+	_ = godotenv.Load()
 	secret := os.Getenv("JWT_SECRET")
+	jwtSecret = []byte(secret)
+}
 
+func GenerateJWT(userID uint, email string) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID,
 		"email":   email,
@@ -22,17 +26,14 @@ func GenerateJWT(userID uint, email string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString([]byte(secret))
+	return token.SignedString(jwtSecret)
 }
 
 func ValidateJWT(tokenString string) (*jwt.Token, error) {
-	_ = godotenv.Load()
-	secret := os.Getenv("JWT_SECRET")
-
 	return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrSignatureInvalid
 		}
-		return []byte(secret), nil
+		return jwtSecret, nil
 	})
 }

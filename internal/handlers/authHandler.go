@@ -9,11 +9,21 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+    "github.com/joho/godotenv"
 
 	"log_relay/internal/models"
 	"log_relay/internal/services"
 	"log_relay/internal/messaging"
 )
+
+var (
+    adminEmail string
+)
+
+func init() {
+    _ = godotenv.Load()
+    adminEmail = strings.ToLower(strings.TrimSpace(os.Getenv("ADMIN_EMAIL")))
+}
 
 func CreateUser(c *gin.Context, db *gorm.DB) {
 	var input struct {
@@ -59,7 +69,7 @@ func CreateUser(c *gin.Context, db *gorm.DB) {
         return
     }
 	isAdmin := false
-	if cleanEmail == os.Getenv("ADMIN_EMAIL") {
+	if cleanEmail == adminEmail {
 		isAdmin = true
 	}
 
@@ -113,15 +123,12 @@ func LoginUser(c *gin.Context, db *gorm.DB) {
 	cleanEmail := strings.ToLower(strings.TrimSpace(input.Email))
 	
 	var user models.User
-	if err := db.Where("email = ?", cleanEmail).First(&user).Error; err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
-        return
-    }
+	result := db.Where("email = ?", cleanEmail).Limit(1).Find(&user)
 
-	if err := services.ComparePassword(user.Password, input.Password); err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
-        return
-    }
+	if result.Error != nil || result.RowsAffected == 0 {
+    c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+    return
+}
 
 	jwtToken, err := services.GenerateJWT(user.ID, user.Email)
     if err != nil {

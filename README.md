@@ -12,4 +12,8 @@
 --- mailing list and mail receiver implementation as the core
 
 --- consider doing enum for fields
---- add emailing and loggig rates like burst daily or slow
+--- add emailing and logging rates like burst daily or slow
+
+
+
+<!-- MAKE SURE TO REFACTOR IN A WAY THAT CONSIDERS DEPLOYMENT -->
