@@ -3,7 +3,8 @@ package main
 import (
     "log"
     "os"
-    "net/http"
+    // comment out for dev
+    // "net/http"
 
     "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
@@ -36,7 +37,7 @@ func main() {
     defer sqlDB.Close()
     log.Println("--Database connection verified--")
 
-    err = db.AutoMigrate(&models.Sender{}, &models.User{}, &models.Message{}, &models.PasswordReset{},)
+    err = db.AutoMigrate(&models.User{}, &models.PasswordReset{}, &models.List{}, &models.Message{}, &models.Contact{},)
     if err != nil {
         log.Fatalf("Migration failed: %v", err)
     }
@@ -44,20 +45,22 @@ func main() {
     log.Println("--Connected---------------------")
     r := gin.Default()
 
-    r.Use(func(c *gin.Context) {
-        frontendURL := os.Getenv("FRONTEND_URL")
-		c.Writer.Header().Set("Access-Control-Allow-Origin", frontendURL)
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
-        c.Writer.Header().Set("Access-Control-Max-Age", "86400")
+    // comment out for dev
+    // r.Use(func(c *gin.Context) {
+    //     frontendURL := os.Getenv("FRONTEND_URL")
+	// 	c.Writer.Header().Set("Access-Control-Allow-Origin", frontendURL)
+	// 	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+	// 	c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+	// 	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+    //     c.Writer.Header().Set("Access-Control-Max-Age", "86400")
 
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(http.StatusNoContent)
-			return
-		}
-		c.Next()
-	})
+	// 	if c.Request.Method == "OPTIONS" {
+	// 		c.AbortWithStatus(http.StatusNoContent)
+	// 		return
+	// 	}
+	// 	c.Next()
+	// })
+    // comment out for dev^
     
     // handlers
     r.GET("/status", func(c *gin.Context) {handlers.Ping(c, db)})

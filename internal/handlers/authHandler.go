@@ -25,11 +25,12 @@ func init() {
     adminEmail = strings.ToLower(strings.TrimSpace(os.Getenv("ADMIN_EMAIL")))
 }
 
+// require people to validate and email and get admin approval
 func CreateUser(c *gin.Context, db *gorm.DB) {
 	var input struct {
         Name     string `json:"name"`
-        Email    string `json:"email" binding:"required,email"`
-        Password string `json:"password" binding:"required,min=8"`
+        Email    string `json:"email" binding:"required"`
+        Password string `json:"password" binding:"required"`
     }
 	if err := c.ShouldBindJSON(&input); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -37,10 +38,8 @@ func CreateUser(c *gin.Context, db *gorm.DB) {
 	}
 
 	cleanEmail := strings.ToLower(strings.TrimSpace(input.Email))
-	displayName := strings.TrimSpace(input.Name)
-    if err := services.ValidateEmail(cleanEmail); err != nil {
-        code, msg := services.HandleEmailError(err)
-        c.JSON(code, gin.H{"error": msg})
+    if !services.IsEmailValid(cleanEmail) {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Please enter a valid email address"})
         return
     }
     var existingUser models.User
@@ -49,15 +48,20 @@ func CreateUser(c *gin.Context, db *gorm.DB) {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database lookup failed"})
         return
     }
-
     if result.RowsAffected > 0 {
         c.JSON(http.StatusConflict, gin.H{"error": "Email already in use"})
         return
     }
 
+    displayName := strings.TrimSpace(input.Name)
     if displayName == "" {
 		displayName = "User" 
 	}
+    // password handling make more stringent
+    if len(input.Password) < 8 {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Password must be at least 8 characters long"})
+        return
+    }
 	hashedPassword, err := services.HashPassword(input.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "An unexpected error occurred. Please try again later."})
@@ -65,7 +69,7 @@ func CreateUser(c *gin.Context, db *gorm.DB) {
 	}
     token, err := services.GenerateToken()
     if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not generate token"})
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "An unexpected error occurred. Please try again later."})
         return
     }
 	isAdmin := false
@@ -112,7 +116,7 @@ func CreateUser(c *gin.Context, db *gorm.DB) {
 
 func LoginUser(c *gin.Context, db *gorm.DB) {
 	var input struct {
-		Email    string `json:"email" binding:"required,email"`
+		Email    string `json:"email" binding:"required"`
 		Password string `json:"password" binding:"required"` 
 	}
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -121,14 +125,25 @@ func LoginUser(c *gin.Context, db *gorm.DB) {
 	}
 
 	cleanEmail := strings.ToLower(strings.TrimSpace(input.Email))
-	
+    if !services.IsEmailValid(cleanEmail) {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Please enter a valid email address"})
+        return
+    }
 	var user models.User
 	result := db.Where("email = ?", cleanEmail).Limit(1).Find(&user)
-
 	if result.Error != nil || result.RowsAffected == 0 {
-    c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
-    return
-}
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+        return
+    }
+
+    if len(input.Password) < 8 {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Password must be at least 8 characters long"})
+        return
+    }
+    if err := services.ComparePassword(user.Password, input.Password); err != nil {
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+        return
+    }
 
 	jwtToken, err := services.GenerateJWT(user.ID, user.Email)
     if err != nil {
@@ -156,7 +171,7 @@ func LoginUser(c *gin.Context, db *gorm.DB) {
 
 func CycleToken(c *gin.Context, db *gorm.DB) {
 	var input struct {
-        Email    string `json:"email" binding:"required,email"`
+        Email    string `json:"email" binding:"required"`
         Password string `json:"password" binding:"required"`
     }
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -165,13 +180,21 @@ func CycleToken(c *gin.Context, db *gorm.DB) {
 	}
 
 	cleanEmail := strings.ToLower(strings.TrimSpace(input.Email))
-	
+	if !services.IsEmailValid(cleanEmail) {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Please enter a valid email address"})
+        return
+    }
 	var user models.User
-	if err := db.Where("email = ?", cleanEmail).First(&user).Error; err != nil {
-        c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+	result := db.Where("email = ?", cleanEmail).Limit(1).Find(&user)
+    if result.Error != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database lookup failed"})
         return
     }
 
+    if len(input.Password) < 8 {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Password must be at least 8 characters long"})
+        return
+    }
 	if err := services.ComparePassword(user.Password, input.Password); err != nil {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
         return
@@ -179,7 +202,7 @@ func CycleToken(c *gin.Context, db *gorm.DB) {
 
 	newToken, err := services.GenerateToken()
     if err != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate secure token"})
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to cycle token"})
         return
     }
 
@@ -196,7 +219,7 @@ func CycleToken(c *gin.Context, db *gorm.DB) {
 
 func ForgotPassword(c *gin.Context, db *gorm.DB){
 	var input struct {
-        Email string `json:"email" binding:"required,email"`
+        Email string `json:"email" binding:"required"`
     }
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -204,13 +227,20 @@ func ForgotPassword(c *gin.Context, db *gorm.DB){
 	}
 
 	cleanEmail := strings.ToLower(strings.TrimSpace(input.Email))
-
+	if !services.IsEmailValid(cleanEmail) {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Please enter a valid email address"})
+        return
+    }
 	var user models.User
-	if err := db.Where("email = ?", cleanEmail).First(&user).Error; err != nil {
-		// Security: don't reveal if email exists
-		c.JSON(http.StatusOK, gin.H{"message": "Check your inbox for a reset link"})
-		return
-	}
+    result := db.Where("email = ?", cleanEmail).Limit(1).Find(&user)
+    if result.Error != nil {
+        c.JSON(http.StatusOK, gin.H{"message": "Check your inbox for a reset link"})
+        return
+    }
+    if result.RowsAffected == 0 {
+        c.JSON(http.StatusOK, gin.H{"message": "Check your inbox for a reset link"})
+        return
+    }
 
 	token, err := services.GenerateToken()
     if err != nil {
@@ -244,18 +274,28 @@ func ForgotPassword(c *gin.Context, db *gorm.DB){
 func ResetPassword(c *gin.Context, db *gorm.DB) {
     token := c.Param("token")
     var input struct {
-        NewPassword string `json:"new_password" binding:"required,min=8"`
+        NewPassword string `json:"new_password" binding:"required"`
     }
     if err := c.ShouldBindJSON(&input); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid format"})
         return
     }
-
+    
+    if len(input.NewPassword) < 8 {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Password must be at least 8 characters long"})
+        return
+    }
     var resetRecord models.PasswordReset
-    if err := db.Preload("User").Where("token = ? AND used = ?", token, false).First(&resetRecord).Error; err != nil {
+    result := db.Preload("User").Where("token = ? AND used = ?", token, false).Limit(1).Find(&resetRecord)
+    if result.Error != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+    if result.RowsAffected == 0 {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
         return
     }
+
     if time.Now().After(resetRecord.ExpiresAt) {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Token expired"})
         return
