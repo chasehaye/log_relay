@@ -12,6 +12,7 @@ import (
     "log_relay/internal/database"
     "log_relay/internal/models"
     "log_relay/internal/handlers"
+    "log_relay/internal/middleware"
 )
 
 func main() {
@@ -66,11 +67,16 @@ func main() {
     r.GET("/status", func(c *gin.Context) {handlers.Ping(c, db)})
     r.POST("/api/user/register", func(c *gin.Context) {handlers.CreateUser(c, db)})
     r.POST("/api/user/login", func(c *gin.Context) {handlers.LoginUser(c, db)})
-    r.POST("/api/user/cycle-token", func(c *gin.Context) {handlers.CycleToken(c, db)})
     r.POST("/api/user/forgot-password", func(c *gin.Context) {handlers.ForgotPassword(c, db)})
     r.POST("/api/user/change-password/:token", func(c *gin.Context) {handlers.ResetPassword(c, db)})
-    r.POST("/api/user/logout", func(c *gin.Context) {handlers.LogOut(c, db)})
 
+    auth := r.Group("/api")
+    auth.Use(middleware.AuthMiddleware())
+    {
+        auth.POST("/user/cycle-token", func(c *gin.Context) { handlers.CycleToken(c, db) })
+        auth.POST("/user/logout", func(c *gin.Context) { handlers.LogOut(c, db) })
+        auth.POST("/list/create", func(c *gin.Context) { handlers.CreateList(c, db) })
+    }
 
     r.Run() // Default is port 8080
 

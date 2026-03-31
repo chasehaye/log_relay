@@ -57,9 +57,9 @@ func CreateUser(c *gin.Context, db *gorm.DB) {
     if displayName == "" {
 		displayName = "User" 
 	}
-    // password handling make more stringent
-    if len(input.Password) < 8 {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Password must be at least 8 characters long"})
+
+    if err := services.ValidatePassword(input.Password); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
 	hashedPassword, err := services.HashPassword(input.Password)
@@ -136,10 +136,6 @@ func LoginUser(c *gin.Context, db *gorm.DB) {
         return
     }
 
-    if len(input.Password) < 8 {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Password must be at least 8 characters long"})
-        return
-    }
     if err := services.ComparePassword(user.Password, input.Password); err != nil {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
         return
@@ -152,13 +148,13 @@ func LoginUser(c *gin.Context, db *gorm.DB) {
     }
 
     c.SetCookie(
-        "token",    // Name
-        jwtToken,   // Value
-        86400,      // MaxAge
-        "/",        // Path
-        "",         // Domain
-        services.IsProduction(),      // SET TO TRUE IN PROD
-        true,       // HttpOnly
+        "token",
+        jwtToken,
+        86400,
+        "/",
+        "",
+        services.IsProduction(),
+        true,
     )
 
 	c.JSON(http.StatusOK, gin.H{
@@ -171,30 +167,21 @@ func LoginUser(c *gin.Context, db *gorm.DB) {
 
 func CycleToken(c *gin.Context, db *gorm.DB) {
 	var input struct {
-        Email    string `json:"email" binding:"required"`
         Password string `json:"password" binding:"required"`
     }
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+    uidValue, _ := c.Get("userID")
+    userID := uidValue.(uint)
 
-	cleanEmail := strings.ToLower(strings.TrimSpace(input.Email))
-	if !services.IsEmailValid(cleanEmail) {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Please enter a valid email address"})
-        return
-    }
 	var user models.User
-	result := db.Where("email = ?", cleanEmail).Limit(1).Find(&user)
-    if result.Error != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database lookup failed"})
+	if err := db.First(&user, userID).Error; err != nil {
+        c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
         return
     }
 
-    if len(input.Password) < 8 {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Password must be at least 8 characters long"})
-        return
-    }
 	if err := services.ComparePassword(user.Password, input.Password); err != nil {
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
         return
@@ -329,13 +316,13 @@ func ResetPassword(c *gin.Context, db *gorm.DB) {
     }
 
     c.SetCookie(
-        "token",    // Name
-        jwtToken,   // Value
-        86400,      // MaxAge (24 hours in seconds)
-        "/",        // Path
-        "",         // Domain (leave empty for current domain)
-        services.IsProduction(),      // Secure (SET TO TRUE IN PRODUCTION/HTTPS)
-        true,       // HttpOnly (CRITICAL: prevents JS access)
+        "token",
+        jwtToken,
+        86400,
+        "/",
+        "",
+        services.IsProduction(),
+        true,
     )
 
     c.JSON(http.StatusOK, gin.H{
@@ -350,4 +337,3 @@ func LogOut(c *gin.Context, db *gorm.DB) {
         "message": "Successfully logged out",
     })
 }
-

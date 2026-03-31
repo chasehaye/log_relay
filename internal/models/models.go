@@ -5,6 +5,15 @@ import (
     "gorm.io/gorm"
 )
 
+type ListType string
+
+const (
+	ListTypeMailing ListType = "MAILING"
+	ListTypeInquiry ListType = "INQUIRY"
+    ListTypeSupport ListType = "SUPPORT"
+    ListTypeCatchAll  ListType = "CATCH_ALL"
+)
+
 type User struct {
     gorm.Model    
     Name      string    `gorm:"type:varchar(255)"`
@@ -27,13 +36,14 @@ type PasswordReset struct {
 
 type List struct {
     gorm.Model
-    Name string        `gorm:"uniqueIndex;type:varchar(255);not null"`
-    ListType   string `gorm:"type:varchar(30);not null"`
-    UserID    uint   `gorm:"index;not null"`
-    Messages []Message `gorm:"foreignKey:ListID"` // both
-    Contacts  []Contact `gorm:"many2many:contact_lists;"` // 1 for mailing list (list of contacts)
+    Name     string   `gorm:"index:idx_user_list_name,unique;type:varchar(255);not null"`
+    ListType   ListType `gorm:"type:varchar(30);not null"`
+    UserID   uint     `gorm:"index:idx_user_list_name,unique;not null"`
+    Messages []Message `gorm:"foreignKey:ListID"` // outbound
+    Subscribers  []Contact `gorm:"many2many:subscriber_list;"` // outbound
 }
-
+// should store percentage outbound success rate
+// should also have contacts sent to for outbound
 type Message struct {
     gorm.Model
     Header        string `gorm:"type:varchar(255)"`
@@ -52,5 +62,5 @@ type Contact struct {
     OriginEmail  string    `gorm:"uniqueIndex;type:varchar(255);not null"`
     OriginPhone  string    `gorm:"uniqueIndex;type:varchar(255);not null"`
     Messages     []Message `gorm:"foreignKey:ContactID"` // 0 for message to user type
-    Lists        []List    `gorm:"many2many:contact_lists;"` // 1 for mailing list type
+    SubscribedTo        []List    `gorm:"many2many:subscriber_list;"` // 1 for mailing list type
 }

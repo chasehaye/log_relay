@@ -3,6 +3,7 @@ package services
 import (
 	"os"
 	"time"
+	"errors"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
@@ -27,6 +28,27 @@ func GenerateJWT(userID uint, email string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	return token.SignedString(jwtSecret)
+}
+
+func GetClaims(token *jwt.Token) (jwt.MapClaims, error) {
+    claims, ok := token.Claims.(jwt.MapClaims)
+    if !ok || !token.Valid {
+        return nil, errors.New("invalid token claims")
+    }
+    return claims, nil
+}
+
+func GetUserIDFromJWT(token *jwt.Token) (uint, error) {
+    claims, err := GetClaims(token)
+    if err != nil {
+        return 0, err
+    }
+    uidFloat, ok := claims["user_id"].(float64)
+    if !ok {
+        return 0, errors.New("user_id not found in token")
+    }
+
+    return uint(uidFloat), nil
 }
 
 func ValidateJWT(tokenString string) (*jwt.Token, error) {
