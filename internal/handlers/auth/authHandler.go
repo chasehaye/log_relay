@@ -1,4 +1,4 @@
-package handlers
+package auth
 
 import (
 	"net/http"
@@ -26,6 +26,7 @@ func init() {
 }
 
 // require people to validate and email and get admin approval
+// add account removal (check jwt + require email and password)
 func CreateUser(c *gin.Context, db *gorm.DB) {
 	var input struct {
         Name     string `json:"name"`

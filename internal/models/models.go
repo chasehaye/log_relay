@@ -21,8 +21,8 @@ type User struct {
     Token     string    `gorm:"type:text"`
     Email     string    `gorm:"uniqueIndex;type:varchar(255);not null"`
 	IsAdmin   bool      `gorm:"default:false"`
-    Lists    []List `gorm:"foreignKey:UserID"`
-    Contacts  []Contact `gorm:"foreignKey:UserID"` // members of business user
+    Lists    []List    `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+    Contacts []Contact `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"` // other members of business
 }
 
 type PasswordReset struct {
@@ -31,16 +31,21 @@ type PasswordReset struct {
     Token     string    `gorm:"uniqueIndex"`
     ExpiresAt time.Time `gorm:"index"`
     Used      bool      `gorm:"default:false"`
-    User      User      `gorm:"foreignKey:UserID"`
+    User      User      `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 type List struct {
-    gorm.Model
-    Name     string   `gorm:"index:idx_user_list_name,unique;type:varchar(255);not null"`
-    ListType   ListType `gorm:"type:varchar(30);not null"`
-    UserID   uint     `gorm:"index:idx_user_list_name,unique;not null"`
-    Messages []Message `gorm:"foreignKey:ListID"` // outbound
-    Subscribers  []Contact `gorm:"many2many:subscriber_list;"` // outbound
+    ID        uint           `gorm:"primarykey" json:"id"`
+    CreatedAt time.Time      `json:"created_at,omitempty"` 
+    UpdatedAt time.Time      `json:"updated_at,omitempty"` 
+    DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+
+    Name      string   `gorm:"index:idx_user_list_name,unique;type:varchar(255);not null" json:"name"`
+    ListType  ListType `gorm:"type:varchar(30);not null" json:"list_type"`
+    UserID    uint     `gorm:"index:idx_user_list_name,unique;not null" json:"-"`
+    
+    Messages []Message `gorm:"foreignKey:ListID" json:"messages,omitempty"` // outbound
+    Subscribers  []Contact `gorm:"many2many:subscriber_list;" json:"subscribers,omitempty"` // outbound
 }
 // should store percentage outbound success rate
 // should also have contacts sent to for outbound

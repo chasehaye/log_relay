@@ -11,8 +11,12 @@ import (
 
     "log_relay/internal/database"
     "log_relay/internal/models"
-    "log_relay/internal/handlers"
     "log_relay/internal/middleware"
+
+    "log_relay/internal/handlers"
+    "log_relay/internal/handlers/auth"
+    "log_relay/internal/handlers/list"
+
 )
 
 func main() {
@@ -65,17 +69,21 @@ func main() {
     
     // handlers
     r.GET("/status", func(c *gin.Context) {handlers.Ping(c, db)})
-    r.POST("/api/user/register", func(c *gin.Context) {handlers.CreateUser(c, db)})
-    r.POST("/api/user/login", func(c *gin.Context) {handlers.LoginUser(c, db)})
-    r.POST("/api/user/forgot-password", func(c *gin.Context) {handlers.ForgotPassword(c, db)})
-    r.POST("/api/user/change-password/:token", func(c *gin.Context) {handlers.ResetPassword(c, db)})
+    r.POST("/api/user/register", func(c *gin.Context) {auth.CreateUser(c, db)})
+    r.POST("/api/user/login", func(c *gin.Context) {auth.LoginUser(c, db)})
+    r.POST("/api/user/forgot-password", func(c *gin.Context) {auth.ForgotPassword(c, db)})
+    r.POST("/api/user/change-password/:token", func(c *gin.Context) {auth.ResetPassword(c, db)})
 
-    auth := r.Group("/api")
-    auth.Use(middleware.AuthMiddleware())
+    protected := r.Group("/api")
+    protected.Use(middleware.AuthMiddleware())
     {
-        auth.POST("/user/cycle-token", func(c *gin.Context) { handlers.CycleToken(c, db) })
-        auth.POST("/user/logout", func(c *gin.Context) { handlers.LogOut(c, db) })
-        auth.POST("/list/create", func(c *gin.Context) { handlers.CreateList(c, db) })
+        protected.POST("/user/cycle-token", func(c *gin.Context) { auth.CycleToken(c, db) })
+        protected.POST("/user/logout", func(c *gin.Context) { auth.LogOut(c, db) })
+
+        protected.POST("/list/create", func(c *gin.Context) { list.CreateList(c, db) })
+        protected.DELETE("/list/delete/:id", func(c *gin.Context) { list.DeleteList(c, db) })
+        protected.GET("/list/index", func(c *gin.Context) { list.IndexList(c, db) })
+        protected.GET("/list/detail/:id", func(c *gin.Context) { list.GetListDetail(c, db) })
     }
 
     r.Run() // Default is port 8080

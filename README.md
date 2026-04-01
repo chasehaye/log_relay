@@ -16,4 +16,4 @@
 
 
 
-<!-- MAKE SURE TO REFACTOR IN A WAY THAT CONSIDERS DEPLOYMENT -->
+<!-- add sub struct structing to the list get by id route  -->
