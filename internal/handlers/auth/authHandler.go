@@ -340,3 +340,24 @@ func LogOut(c *gin.Context, db *gorm.DB) {
         "message": "Successfully logged out",
     })
 }
+
+func GetMe(c *gin.Context, db *gorm.DB) {
+	uidValue, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+	userID := uidValue.(uint)
+	var user models.User
+	if err := db.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "User record not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"id":         user.ID,
+		"user_name":  user.Name,
+		"user_email": user.Email,
+		"is_admin":   user.IsAdmin,
+	})
+}

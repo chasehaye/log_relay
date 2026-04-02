@@ -4,7 +4,7 @@ import (
     "log"
     "os"
     // comment out for dev
-    // "net/http"
+    "net/http"
 
     "github.com/gin-gonic/gin"
     "github.com/joho/godotenv"
@@ -52,20 +52,20 @@ func main() {
     r := gin.Default()
 
     // comment out for dev
-    // r.Use(func(c *gin.Context) {
-    //     frontendURL := os.Getenv("FRONTEND_URL")
-	// 	c.Writer.Header().Set("Access-Control-Allow-Origin", frontendURL)
-	// 	c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-	// 	c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-	// 	c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
-    //     c.Writer.Header().Set("Access-Control-Max-Age", "86400")
+    r.Use(func(c *gin.Context) {
+        frontendURL := os.Getenv("FRONTEND_URL")
+		c.Writer.Header().Set("Access-Control-Allow-Origin", frontendURL)
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+        c.Writer.Header().Set("Access-Control-Max-Age", "86400")
 
-	// 	if c.Request.Method == "OPTIONS" {
-	// 		c.AbortWithStatus(http.StatusNoContent)
-	// 		return
-	// 	}
-	// 	c.Next()
-	// })
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+		c.Next()
+	})
     // comment out for dev^
     
     // handlers onsite
@@ -73,7 +73,7 @@ func main() {
     r.POST("/api/user/register", func(c *gin.Context) {auth.CreateUser(c, db)})
     r.POST("/api/user/login", func(c *gin.Context) {auth.LoginUser(c, db)})
     r.POST("/api/user/forgot-password", func(c *gin.Context) {auth.ForgotPassword(c, db)})
-    r.GET("/api/user/change-password/:token", func(c *gin.Context) {auth.ResetPassword(c, db)})
+    r.POST("/api/user/change-password/:token", func(c *gin.Context) {auth.ResetPassword(c, db)})
 
 
     r.POST("/api/subscriber/signup/:list_id", func(c *gin.Context) { contact.ContactSubscribe(c, db)})
@@ -85,6 +85,7 @@ func main() {
     protected := r.Group("/api")
     protected.Use(middleware.AuthMiddleware())
     {
+        protected.GET("/user/me", func(c *gin.Context) { auth.GetMe(c, db) })
         protected.POST("/user/cycle-token", func(c *gin.Context) { auth.CycleToken(c, db) })
         protected.POST("/user/logout", func(c *gin.Context) { auth.LogOut(c, db) })
 
