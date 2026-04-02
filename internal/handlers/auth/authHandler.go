@@ -29,7 +29,7 @@ func init() {
 // add account removal (check jwt + require email and password)
 func CreateUser(c *gin.Context, db *gorm.DB) {
 	var input struct {
-        Name     string `json:"name"`
+        Name     string `json:"name" binding:"max=255"`
         Email    string `json:"email" binding:"required"`
         Password string `json:"password" binding:"required"`
     }
@@ -38,11 +38,11 @@ func CreateUser(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
-	cleanEmail := strings.ToLower(strings.TrimSpace(input.Email))
-    if !services.IsEmailValid(cleanEmail) {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Please enter a valid email address"})
-        return
+	cleanEmail, ok := services.CleanAndValidateEmail(c, input.Email)
+    if !ok {
+        return 
     }
+
     var existingUser models.User
     result := db.Where("email = ?", cleanEmail).Limit(1).Find(&existingUser)
     if result.Error != nil {
@@ -55,6 +55,10 @@ func CreateUser(c *gin.Context, db *gorm.DB) {
     }
 
     displayName := strings.TrimSpace(input.Name)
+    if len(displayName) > 255 {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Name is too long (max 255 characters)"})
+        return
+    }
     if displayName == "" {
 		displayName = "User" 
 	}
@@ -125,10 +129,9 @@ func LoginUser(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
-	cleanEmail := strings.ToLower(strings.TrimSpace(input.Email))
-    if !services.IsEmailValid(cleanEmail) {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Please enter a valid email address"})
-        return
+	cleanEmail, ok := services.CleanAndValidateEmail(c, input.Email)
+    if !ok {
+        return 
     }
 	var user models.User
 	result := db.Where("email = ?", cleanEmail).Limit(1).Find(&user)
@@ -214,10 +217,9 @@ func ForgotPassword(c *gin.Context, db *gorm.DB){
 		return
 	}
 
-	cleanEmail := strings.ToLower(strings.TrimSpace(input.Email))
-	if !services.IsEmailValid(cleanEmail) {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Please enter a valid email address"})
-        return
+	cleanEmail, ok := services.CleanAndValidateEmail(c, input.Email)
+    if !ok {
+        return 
     }
 	var user models.User
     result := db.Where("email = ?", cleanEmail).Limit(1).Find(&user)

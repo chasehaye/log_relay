@@ -16,6 +16,7 @@ import (
     "log_relay/internal/handlers"
     "log_relay/internal/handlers/auth"
     "log_relay/internal/handlers/list"
+    "log_relay/internal/handlers/contact"
 
 )
 
@@ -67,12 +68,19 @@ func main() {
 	// })
     // comment out for dev^
     
-    // handlers
+    // handlers onsite
     r.GET("/status", func(c *gin.Context) {handlers.Ping(c, db)})
     r.POST("/api/user/register", func(c *gin.Context) {auth.CreateUser(c, db)})
     r.POST("/api/user/login", func(c *gin.Context) {auth.LoginUser(c, db)})
     r.POST("/api/user/forgot-password", func(c *gin.Context) {auth.ForgotPassword(c, db)})
-    r.POST("/api/user/change-password/:token", func(c *gin.Context) {auth.ResetPassword(c, db)})
+    r.GET("/api/user/change-password/:token", func(c *gin.Context) {auth.ResetPassword(c, db)})
+
+
+    r.POST("/api/subscriber/signup/:list_id", func(c *gin.Context) { contact.ContactSubscribe(c, db)})
+    // email embedded calls
+    r.GET("/api/subscriber/signup/:list_id/confirm/:token", func(c *gin.Context) { contact.ContactSubscribeConfirm(c, db)})
+    r.DELETE("/api/subscriber/remove/:list_id/confirm/:token", func(c *gin.Context) { contact.ContactSubscribeConfirm(c, db)})
+
 
     protected := r.Group("/api")
     protected.Use(middleware.AuthMiddleware())
@@ -84,8 +92,8 @@ func main() {
         protected.DELETE("/list/delete/:id", func(c *gin.Context) { list.DeleteList(c, db) })
         protected.GET("/list/index", func(c *gin.Context) { list.IndexList(c, db) })
         protected.GET("/list/detail/:id", func(c *gin.Context) { list.GetListDetail(c, db) })
+        
     }
-
     r.Run() // Default is port 8080
 
 }

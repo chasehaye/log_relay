@@ -4,6 +4,9 @@ import (
 	"os"
 	"time"
 	"errors"
+	"crypto/rand"
+	"encoding/base64"
+	"log"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
@@ -58,4 +61,13 @@ func ValidateJWT(tokenString string) (*jwt.Token, error) {
 		}
 		return jwtSecret, nil
 	})
+}
+// api
+func GenerateToken() (string, error) {
+    tokenBytes := make([]byte, 32)
+    if _, err := rand.Read(tokenBytes); err != nil {
+        log.Printf("CRITICAL: Entropy failure: %v", err)
+        return "", err
+    }
+    return base64.RawURLEncoding.EncodeToString(tokenBytes), nil
 }

@@ -8,13 +8,14 @@ import (
     "math"
 
 	"log_relay/internal/models"
-
+	"log_relay/internal/services"
 )
 
 func CreateList(c *gin.Context, db *gorm.DB) {
 	var input struct {
 		Name  string `json:"name" binding:"required"`
 		ListType string `json:"listtype" binding:"required"`
+        PublicFacingName string `json:"public_facing_name" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -29,6 +30,12 @@ func CreateList(c *gin.Context, db *gorm.DB) {
     }
     userID := uidValue.(uint)
 
+    publicID, err := services.GenerateToken()
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate list identifier"})
+        return
+    }
+
 	var existing models.List
     result := db.Where("name = ? AND user_id = ?", input.Name, userID).Limit(1).Find(&existing)
     if result.RowsAffected > 0 {
@@ -40,6 +47,8 @@ func CreateList(c *gin.Context, db *gorm.DB) {
         Name:     input.Name,
         ListType: models.ListType(input.ListType),
         UserID:   userID,
+        PublicID: publicID,
+        PublicFacingName: input.PublicFacingName,
     }
 	if err := db.Create(&newList).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
@@ -123,7 +132,6 @@ func IndexList(c *gin.Context, db *gorm.DB) {
     })
 }
 
-// add pagination of sub structs
 func GetListDetail(c *gin.Context, db *gorm.DB){
     listID := c.Param("id")
 
