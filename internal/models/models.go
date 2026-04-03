@@ -42,12 +42,13 @@ type List struct {
 
     PublicID string `gorm:"uniqueIndex;type:varchar(50);not null"`
     PublicFacingName         string `gorm:"type:varchar(255)" json:"public_facing_name"`
+
     Name      string   `gorm:"index:idx_user_list_name,unique;type:varchar(255);not null" json:"name"`
     ListType  ListType `gorm:"type:varchar(30);not null" json:"list_type"`
     UserID    uint     `gorm:"index:idx_user_list_name,unique;not null" json:"-"`
     
-    Messages []Message `gorm:"foreignKey:ListID" json:"messages,omitempty"` // outbound
-    Subscribers  []Contact `gorm:"many2many:subscriber_list;" json:"subscribers,omitempty"`
+    Messages []Message `gorm:"foreignKey:ListID" json:"messages,omitempty"`
+    Subscribers  []Contact `gorm:"many2many:subscriber_list;" json:"subscribers,omitempty"` //outbound
 }
 // should store percentage outbound success rate
 // should also have contacts sent to for outbound
@@ -55,27 +56,29 @@ type Message struct {
     gorm.Model
     Header        string `gorm:"type:varchar(255)"`
     Body          string `gorm:"type:text;not null"`
-    Importance    string `gorm:"type:varchar(30)"`
-    MessageStatus string `gorm:"type:varchar(30)"`
-    Type    string  `gorm:"type:varchar(20)"` // 0 in or 1 out
-    ContactID     uint    `gorm:"index"`  // 0
-    ListID        uint   `gorm:"index"` // both
+    ListID        uint   `gorm:"index"` // list association
+    Type    string  `gorm:"type:varchar(20)"` // "INBOUND" or "OUTBOUND"
+    StatusOutBound     string `gorm:"type:varchar(20);default:'PENDING'"`
+
+
+    StatusInBound     string `gorm:"type:varchar(20);default:'PENDING'"`
+    Importance    string `gorm:"type:varchar(30)"` // for inbound
+    ContactID     uint    `gorm:"index"` // contact association, for inbound
 }
 
 type Contact struct {
     gorm.Model `json:"-"`
     UserID       uint   `gorm:"uniqueIndex:idx_user_email;not null" json:"user_id"`
     Email        string `gorm:"uniqueIndex:idx_user_email;type:varchar(255);not null" json:"email"`
- 
     Name         string `gorm:"type:varchar(255)" json:"name"`
-    // unsubscribe to mailing list
-    UnSubToken string `gorm:"index" json:"-"`
     // subscribe to mailing list
     Verified          bool   `gorm:"default:false" json:"verified"`
     VerificationToken string `gorm:"index" json:"-"`
     TokenExpiresAt    time.Time `json:"-"`
-
+    // unsubscribe to mailing list
+    UnSubToken string `gorm:"index" json:"-"`
     Unsubscribed      bool      `gorm:"default:false" json:"unsubscribed"`
-    // Messages     []Message `gorm:"foreignKey:ContactID"` // 0 for message to user type
-    SubscribedTo        []List    `gorm:"many2many:subscriber_list;" json:"subscribed_to,omitempty"` // 1 for mailing list type
+
+    // Messages     []Message `gorm:"foreignKey:ContactID"` // for messages to user type, not for mailing list type
+    SubscribedTo        []List    `gorm:"many2many:subscriber_list;" json:"subscribed_to,omitempty"`
 }
