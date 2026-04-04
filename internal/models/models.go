@@ -16,7 +16,10 @@ const (
 )
 
 type User struct {
-    gorm.Model    
+    ID        uint           `gorm:"primarykey"`
+    CreatedAt time.Time
+    UpdatedAt time.Time  
+
     Name      string    `gorm:"type:varchar(255)"`
     Password  string    `gorm:"not null" json:"-"`
     Token     string    `gorm:"type:text"`
@@ -38,17 +41,18 @@ type List struct {
     ID        uint           `gorm:"primarykey" json:"id"`
     CreatedAt time.Time      `json:"created_at,omitempty"` 
     UpdatedAt time.Time      `json:"updated_at,omitempty"` 
-    DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+
 
     PublicID string `gorm:"uniqueIndex;type:varchar(50);not null"`
     PublicFacingName         string `gorm:"type:varchar(255)" json:"public_facing_name"`
-
-    Name      string   `gorm:"index:idx_user_list_name,unique;type:varchar(255);not null" json:"name"`
     ListType  ListType `gorm:"type:varchar(30);not null" json:"list_type"`
+    
+    Name      string   `gorm:"index:idx_user_list_name,unique;type:varchar(255);not null" json:"name"`
     UserID    uint     `gorm:"index:idx_user_list_name,unique;not null" json:"-"`
     
     Messages []Message `gorm:"foreignKey:ListID" json:"messages,omitempty"`
     Subscribers  []Contact `gorm:"many2many:subscriber_list;" json:"subscribers,omitempty"` //outbound
+    SubscriberCount int `gorm:"-" json:"subscriber_count"`
 }
 // should store percentage outbound success rate
 // should also have contacts sent to for outbound

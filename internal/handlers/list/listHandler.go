@@ -81,11 +81,11 @@ func DeleteList(c *gin.Context, db *gorm.DB) {
 
 func IndexList(c *gin.Context, db *gorm.DB) {
     var input struct {
-        CntPerPage int `json:"cnt_per_page" binding:"required,min=1"`
-        Page int `json:"page" binding:"required,min=1"`
+        CntPerPage int `form:"cnt_per_page" binding:"required,min=1"`
+        Page       int `form:"page" binding:"required,min=1"`
     }
-    if err := c.ShouldBindJSON(&input); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid pagination parameters"})
+    if err := c.ShouldBindQuery(&input); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Query parameters 'page' and 'cnt_per_page' are required"})
         return
     }
 
@@ -98,6 +98,7 @@ func IndexList(c *gin.Context, db *gorm.DB) {
 
     if input.CntPerPage < 1 || input.CntPerPage > 50 {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid count per page"})
+        return
     }
 
     var totalCount int64
@@ -115,9 +116,11 @@ func IndexList(c *gin.Context, db *gorm.DB) {
 
     var lists []models.List
     offset := (requestedPage - 1) * input.CntPerPage
+
+    countSubQuery := "(SELECT COUNT(*) FROM subscriber_list WHERE subscriber_list.list_id = lists.id) AS subscriber_count"
     
     db.Where("user_id = ?", userID).
-        Select("id", "name", "list_type", "updated_at").
+        Select("id", "name", "list_type", "updated_at", countSubQuery).
         Limit(input.CntPerPage).
         Offset(offset).
         Order("updated_at DESC").
