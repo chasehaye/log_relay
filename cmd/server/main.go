@@ -25,10 +25,18 @@ func main() {
     if err != nil {
         log.Fatal("Error loading .env file")
     }
+    dbHost, ok := os.LookupEnv("POSTGRESQL_HOST")
+    if !ok {
+	    dbHost = "localhost"
+    }
+    dbPort, ok := os.LookupEnv("POSTGRESQL_PORT")
+    if !ok {
+	    dbPort = "5432"
+    }
     dbPassword := os.Getenv("POSTGRESQL_PASS")
     dbUser, dbName := os.Getenv("POSTGRESQL_USER"), "log_relay"
 
-    db, err := database.ConnectToDB(dbUser, dbPassword, dbName)
+    db, err := database.ConnectToDB(dbHost, dbUser, dbPassword, dbName, dbPort)
     if err != nil {
         log.Fatalln("Failed to connect to database:", err)
     }

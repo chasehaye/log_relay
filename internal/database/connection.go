@@ -6,9 +6,9 @@ import (
     "gorm.io/gorm"
 )
 
-func ConnectToDB(dbUser, dbPassword, dbName string) (*gorm.DB, error) {
-    dsn := fmt.Sprintf("host=localhost user=%s password=%s dbname=%s port=5432 sslmode=disable", 
-        dbUser, dbPassword, dbName)
+func ConnectToDB(dbHost, dbUser, dbPassword, dbName, dbPort string) (*gorm.DB, error) {
+    dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", 
+        dbHost, dbUser, dbPassword, dbName, dbPort)
 
     return gorm.Open(postgres.Open(dsn), &gorm.Config{})
 }
