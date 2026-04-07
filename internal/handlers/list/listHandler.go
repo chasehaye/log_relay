@@ -14,7 +14,7 @@ import (
 func CreateList(c *gin.Context, db *gorm.DB) {
 	var input struct {
 		Name  string `json:"name" binding:"required"`
-		ListType string `json:"listtype" binding:"required"`
+		ListType string `json:"list_type" binding:"required"`
         PublicFacingName string `json:"public_facing_name" binding:"required"`
 	}
 
@@ -81,7 +81,7 @@ func DeleteList(c *gin.Context, db *gorm.DB) {
 
 func IndexList(c *gin.Context, db *gorm.DB) {
     var input struct {
-        CntPerPage int `form:"cnt_per_page" binding:"required,min=1"`
+        CountPerPage int `form:"count_per_page" binding:"required,min=1"`
         Page       int `form:"page" binding:"required,min=1"`
     }
     if err := c.ShouldBindQuery(&input); err != nil {
@@ -96,7 +96,7 @@ func IndexList(c *gin.Context, db *gorm.DB) {
     }
     userID := uidValue.(uint)
 
-    if input.CntPerPage < 1 || input.CntPerPage > 50 {
+    if input.CountPerPage < 1 || input.CountPerPage > 50 {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid count per page"})
         return
     }
@@ -106,7 +106,7 @@ func IndexList(c *gin.Context, db *gorm.DB) {
 
     totalPages := 0
     if totalCount > 0 {
-        totalPages = int(math.Ceil(float64(totalCount) / float64(input.CntPerPage)))
+        totalPages = int(math.Ceil(float64(totalCount) / float64(input.CountPerPage)))
     }
 
     requestedPage := input.Page
@@ -115,13 +115,13 @@ func IndexList(c *gin.Context, db *gorm.DB) {
     }
 
     var lists []models.List
-    offset := (requestedPage - 1) * input.CntPerPage
+    offset := (requestedPage - 1) * input.CountPerPage
 
     countSubQuery := "(SELECT COUNT(*) FROM subscriber_list WHERE subscriber_list.list_id = lists.id) AS subscriber_count"
     
     db.Where("user_id = ?", userID).
         Select("id", "name", "list_type", "updated_at", countSubQuery).
-        Limit(input.CntPerPage).
+        Limit(input.CountPerPage).
         Offset(offset).
         Order("updated_at DESC").
         Find(&lists)

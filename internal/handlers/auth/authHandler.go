@@ -6,6 +6,7 @@ import (
 	"strings"
 	"fmt"
 	"time"
+    "log"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -46,6 +47,7 @@ func CreateUser(c *gin.Context, db *gorm.DB) {
     var existingUser models.User
     result := db.Where("email = ?", cleanEmail).Limit(1).Find(&existingUser)
     if result.Error != nil {
+        log.Printf("Database lookup error: %v", result.Error)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database lookup failed"})
         return
     }
@@ -90,6 +92,7 @@ func CreateUser(c *gin.Context, db *gorm.DB) {
         IsAdmin:  isAdmin,
     }
     if err := db.Create(&user).Error; err != nil {
+        log.Printf("Failed to create user in database: %v", err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error: could not complete registration"})
         return
     }
@@ -136,6 +139,7 @@ func LoginUser(c *gin.Context, db *gorm.DB) {
 	var user models.User
 	result := db.Where("email = ?", cleanEmail).Limit(1).Find(&user)
 	if result.Error != nil || result.RowsAffected == 0 {
+        log.Printf("Database lookup failed: Login attempt with non-existent email: %s", cleanEmail)
         c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
         return
     }
@@ -182,6 +186,7 @@ func CycleToken(c *gin.Context, db *gorm.DB) {
 
 	var user models.User
 	if err := db.First(&user, userID).Error; err != nil {
+        log.Printf("Failed to lookup user for token cycling, userID=%d: %v", userID, err)
         c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
         return
     }
@@ -198,6 +203,7 @@ func CycleToken(c *gin.Context, db *gorm.DB) {
     }
 
 	if err := db.Model(&user).Update("token", newToken).Error; err != nil {
+        log.Printf("Failed to update API token for userID=%d: %v", userID, err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update token in database"})
         return
     }
@@ -224,6 +230,7 @@ func ForgotPassword(c *gin.Context, db *gorm.DB){
 	var user models.User
     result := db.Where("email = ?", cleanEmail).Limit(1).Find(&user)
     if result.Error != nil {
+        log.Printf("Database error during forgot password lookup for email=%s: %v", cleanEmail, result.Error)
         c.JSON(http.StatusOK, gin.H{"message": "Check your inbox for a reset link"})
         return
     }
@@ -247,6 +254,7 @@ func ForgotPassword(c *gin.Context, db *gorm.DB){
         ExpiresAt: time.Now().Add(5 * time.Minute),
     }
     if err := db.Create(&resetRecord).Error; err != nil {
+        log.Printf("Failed to create password reset record for userID=%d: %v", user.ID, err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create reset link"})
         return
     }
@@ -254,6 +262,7 @@ func ForgotPassword(c *gin.Context, db *gorm.DB){
     resetLink := fmt.Sprintf("%s/reset-password/%s", frontendURL, token)
     
     if err := messaging.SendResetEmail(cleanEmail, resetLink); err != nil {
+        log.Printf("Failed to send reset email to %s: %v", cleanEmail, err)
         db.Delete(&resetRecord)
         c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Email service unavailable"})
         return
@@ -264,20 +273,21 @@ func ForgotPassword(c *gin.Context, db *gorm.DB){
 func ResetPassword(c *gin.Context, db *gorm.DB) {
     token := c.Param("token")
     var input struct {
-        NewPassword string `json:"new_password" binding:"required"`
+        Password string `json:"password" binding:"required"`
     }
     if err := c.ShouldBindJSON(&input); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid format"})
         return
     }
     
-    if len(input.NewPassword) < 8 {
+    if len(input.Password) < 8 {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Password must be at least 8 characters long"})
         return
     }
     var resetRecord models.PasswordReset
     result := db.Preload("User").Where("token = ? AND used = ?", token, false).Limit(1).Find(&resetRecord)
     if result.Error != nil {
+        log.Printf("Database error during password reset lookup for token=%s: %v", token, result.Error)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
         return
     }
@@ -291,7 +301,7 @@ func ResetPassword(c *gin.Context, db *gorm.DB) {
         return
     }
 
-    hashedPassword, err := services.HashPassword(input.NewPassword)
+    hashedPassword, err := services.HashPassword(input.Password)
     if err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Error updating password"})
         return
@@ -308,6 +318,7 @@ func ResetPassword(c *gin.Context, db *gorm.DB) {
     })
 
     if err != nil {
+        log.Printf("Failed to update password for userID=%d: %v", resetRecord.UserID, err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not complete password reset"})
         return
     }
@@ -350,6 +361,7 @@ func GetMe(c *gin.Context, db *gorm.DB) {
 	userID := uidValue.(uint)
 	var user models.User
 	if err := db.First(&user, userID).Error; err != nil {
+        log.Printf("Failed to fetch user record for userID=%d: %v", userID, err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "User record not found"})
 		return
 	}

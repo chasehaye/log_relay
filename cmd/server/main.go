@@ -85,9 +85,9 @@ func main() {
 
 
     r.POST("/api/subscriber/signup/:list_id", func(c *gin.Context) { contact.ContactSubscribe(c, db)})
-    // email embedded calls
-    r.GET("/api/subscriber/signup/:list_id/confirm/:token", func(c *gin.Context) { contact.ContactSubscribeConfirm(c, db)})
-    r.DELETE("/api/subscriber/remove/:list_id/confirm/:token", func(c *gin.Context) { contact.ContactSubscribeConfirm(c, db)})
+    r.GET("/api/subscriber/signup/confirm", func(c *gin.Context) { contact.ContactSubscribeConfirm(c, db)})
+    // implement by adding a link to the front end to sub from mailing list
+    r.DELETE("/api/subscriber/remove/:list_id/confirm/:token", func(c *gin.Context) { contact.ContactUnSubscribe(c, db)})
 
 
     protected := r.Group("/api")

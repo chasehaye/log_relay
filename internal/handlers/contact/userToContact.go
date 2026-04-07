@@ -49,16 +49,23 @@ func ContactSubscribe(c *gin.Context, db *gorm.DB) {
     }
 
 	var contact models.Contact
-    db.Where(models.Contact{
-        Email:  cleanEmail,
-        UserID: list.UserID,
-    }).FirstOrCreate(&contact)
-
-	db.Model(&contact).Updates(models.Contact{
-		VerificationToken: token,
-		TokenExpiresAt:    time.Now().Add(24 * time.Hour),
-		Verified:          false,
-	})
+    err = db.Transaction(func(tx *gorm.DB) error {
+        if err := tx.Where(models.Contact{
+            Email:  cleanEmail,
+            UserID: list.UserID,
+        }).FirstOrCreate(&contact).Error; err != nil {
+            return err
+        }
+        return tx.Model(&contact).Updates(models.Contact{
+            VerificationToken: token,
+            TokenExpiresAt:    time.Now().Add(24 * time.Hour),
+            Verified:          false, 
+        }).Error
+    })
+	if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error during pre subscribe"})
+        return
+    }
 
 	frontendURL := os.Getenv("FRONTEND_URL") 
     confirmLink := fmt.Sprintf("%s/confirm-subscription?token=%s&list_id=%s", frontendURL, token, publicID)
@@ -73,8 +80,8 @@ func ContactSubscribe(c *gin.Context, db *gorm.DB) {
 }
 
 func ContactSubscribeConfirm(c *gin.Context, db *gorm.DB) {
-	publicID := c.Param("list_id")
-	token := c.Param("token")
+	publicID := c.Query("list_id")
+	token := c.Query("token")
 
 	var list models.List
     if err := db.Where("public_id = ?", publicID).First(&list).Error; err != nil {

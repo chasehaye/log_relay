@@ -15,5 +15,5 @@
 --- add emailing and logging rates like burst daily or slow
 
 
-
+-- fix user api token so that the random number is stored as a hash not plaintext
 <!-- add sub struct structing to the list get by id route  -->

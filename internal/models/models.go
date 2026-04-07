@@ -52,7 +52,7 @@ type List struct {
     
     Messages []Message `gorm:"foreignKey:ListID" json:"messages,omitempty"`
     Subscribers  []Contact `gorm:"many2many:subscriber_list;" json:"subscribers,omitempty"` //outbound
-    SubscriberCount int `gorm:"-" json:"subscriber_count"`
+    SubscriberCount int `gorm:"-" json:"subscriber_count"` //outbound
 }
 // should store percentage outbound success rate
 // should also have contacts sent to for outbound
