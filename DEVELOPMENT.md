@@ -106,7 +106,7 @@ Set-Cookie: token=...
 
 ### Get the list index
 
-`curl -iv -X GET -b lr_cookie.txt 'http://127.0.0.1:8080/api/list/index?cnt_per_page=10&page=1'`
+`curl -iv -X GET -b lr_cookie.txt 'http://127.0.0.1:8080/api/list/index?count_per_page=10&page=1'`
 
 ```
 200 OK
