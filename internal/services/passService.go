@@ -21,8 +21,9 @@ func ComparePassword(hashedPassword, plainPassword string) error {
 }
 
 func ValidatePassword(password string) error {
+	var errs []error
 	if len(password) < 8 {
-		return errors.New("password must be at least 8 characters long")
+		errs = append(errs, errors.New("password must be at least 8 characters long"))
 	}
 	var (
 		hasUpper   bool
@@ -44,17 +45,21 @@ func ValidatePassword(password string) error {
 	}
 
 	if !hasUpper {
-		return errors.New("password must contain at least one uppercase letter")
+		errs = append(errs, errors.New("password must contain at least one uppercase letter"))
 	}
 	if !hasLower {
-		return errors.New("password must contain at least one lowercase letter")
+		errs = append(errs, errors.New("password must contain at least one lowercase letter"))
 	}
 	if !hasNumber {
-		return errors.New("password must contain at least one number")
+		errs = append(errs, errors.New("password must contain at least one number"))
 	}
 	if !hasSpecial {
-		return errors.New("password must contain at least one special character")
+		errs = append(errs, errors.New("password must contain at least one special character"))
 	}
 
-	return nil
+	if len(errs) == 0 {
+        return nil
+    }
+
+    return errors.Join(errs...)
 }

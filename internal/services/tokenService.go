@@ -10,6 +10,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
+	"crypto/sha256"
+    "encoding/hex"
 )
 
 var jwtSecret []byte
@@ -32,7 +34,6 @@ func GenerateJWT(userID uint, email string) (string, error) {
 
 	return token.SignedString(jwtSecret)
 }
-
 func GetClaims(token *jwt.Token) (jwt.MapClaims, error) {
     claims, ok := token.Claims.(jwt.MapClaims)
     if !ok || !token.Valid {
@@ -40,7 +41,6 @@ func GetClaims(token *jwt.Token) (jwt.MapClaims, error) {
     }
     return claims, nil
 }
-
 func GetUserIDFromJWT(token *jwt.Token) (uint, error) {
     claims, err := GetClaims(token)
     if err != nil {
@@ -53,7 +53,6 @@ func GetUserIDFromJWT(token *jwt.Token) (uint, error) {
 
     return uint(uidFloat), nil
 }
-
 func ValidateJWT(tokenString string) (*jwt.Token, error) {
 	return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -62,6 +61,7 @@ func ValidateJWT(tokenString string) (*jwt.Token, error) {
 		return jwtSecret, nil
 	})
 }
+
 // api
 func GenerateToken() (string, error) {
     tokenBytes := make([]byte, 32)
@@ -70,4 +70,15 @@ func GenerateToken() (string, error) {
         return "", err
     }
     return base64.RawURLEncoding.EncodeToString(tokenBytes), nil
+}
+
+func GenerateHashedToken() (string, string, error) {
+    plainToken, err := GenerateToken()
+    if err != nil {
+        return "", "", err
+    }
+    hash := sha256.Sum256([]byte(plainToken))
+    hashedToken := hex.EncodeToString(hash[:])
+
+    return plainToken, hashedToken, nil
 }

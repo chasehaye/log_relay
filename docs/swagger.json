@@ -1,0 +1,594 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API Server for Log Relay Project.",
+        "title": "Log Relay API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/",
+    "paths": {
+        "/api/user/change-password/{token}": {
+            "post": {
+                "description": "Validates the reset token and updates the user's password.\nAutomatically logs the user in by setting a session cookie upon success.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Change Password",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Reset Token",
+                        "name": "token",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New Password",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_auth.PasswordInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_auth.ResetPasswordResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ValidationErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.UnauthorizedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/cycle-token": {
+            "post": {
+                "description": "Invalidates the old API token and generates a new one. Requires password confirmation and a valid session cookie.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Rotate API Token",
+                "parameters": [
+                    {
+                        "description": "Confirm password to rotate token",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_auth.PasswordInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_auth.CycleTokenResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.UnauthorizedResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Session not valid or not found",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.NotFoundErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/forgot-password": {
+            "post": {
+                "description": "Sends a password reset link to the provided email if the account exists.\nAlways returns a success message to prevent email enumeration.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Request Password Reset",
+                "parameters": [
+                    {
+                        "description": "User Email",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_auth.ForgotPasswordInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_auth.ForgotPasswordResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ValidationErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/login": {
+            "post": {
+                "description": "Login for exisitng user using email and passwrod (compares the stored hash to the input).\nReturns a success message and sets an HttpOnly 'token' cookie.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Login Existing User",
+                "parameters": [
+                    {
+                        "description": "User Login Credentials",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_auth.LoginInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_auth.LoginResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input or malformed email",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ValidationErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Validation failed",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.UnauthorizedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/logout": {
+            "post": {
+                "description": "Invalidates the session by clearing the 'token' cookie.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "User Logout",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_auth.LogOutResponse"
+                        },
+                        "headers": {
+                            "Set-Cookie": {
+                                "type": "string",
+                                "description": "token=; Max-Age=0; Path=/; HttpOnly; Secure"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Session expired or invalid",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.UnauthorizedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/me": {
+            "get": {
+                "description": "Returns the details of the authenticated user based on the session cookie.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Get Current User Info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_auth.LoginResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.UnauthorizedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/user/register": {
+            "post": {
+                "description": "Creates a user account, hashes the password, and hashes and API token.\nReturns a one-time API token and sets an HttpOnly 'token' cookie.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Register New User",
+                "parameters": [
+                    {
+                        "description": "User Registration Data",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_auth.RegisterInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_auth.RegisterResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Validation failed",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ValidationErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "User already exists with email",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.AlreadyExistsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/status": {
+            "get": {
+                "description": "Checks if the API and Database are reachable.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "Health Check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.StatusResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.StatusResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "internal_handlers.StatusResponse": {
+            "type": "object",
+            "properties": {
+                "database": {
+                    "type": "string",
+                    "example": "connected"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "healthy"
+                }
+            }
+        },
+        "internal_handlers_auth.CycleTokenResponse": {
+            "type": "object",
+            "properties": {
+                "api_token": {
+                    "type": "string",
+                    "example": "new_lr_7f8e9d0a1b2c3d4e5f..."
+                },
+                "message": {
+                    "type": "string",
+                    "example": "API Token updated successfully"
+                }
+            }
+        },
+        "internal_handlers_auth.ForgotPasswordInput": {
+            "type": "object",
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "user@example.com"
+                }
+            }
+        },
+        "internal_handlers_auth.ForgotPasswordResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Check your inbox for a reset link"
+                }
+            }
+        },
+        "internal_handlers_auth.LogOutResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Successfully logged out"
+                }
+            }
+        },
+        "internal_handlers_auth.LoginInput": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "user@example.com"
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 72,
+                    "minLength": 8,
+                    "example": "SecurePass123!"
+                }
+            }
+        },
+        "internal_handlers_auth.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "is_admin": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Login successful"
+                },
+                "user_email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "user_name": {
+                    "type": "string",
+                    "example": "User Name"
+                }
+            }
+        },
+        "internal_handlers_auth.PasswordInput": {
+            "type": "object",
+            "required": [
+                "password"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "maxLength": 72,
+                    "minLength": 8,
+                    "example": "SecurePass123!"
+                }
+            }
+        },
+        "internal_handlers_auth.RegisterInput": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "user@example.com"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "User Name"
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 72,
+                    "minLength": 8,
+                    "example": "SecurePass123!"
+                }
+            }
+        },
+        "internal_handlers_auth.RegisterResponse": {
+            "type": "object",
+            "properties": {
+                "api_token": {
+                    "type": "string",
+                    "example": "abcdef_gh1234!@#zxcv"
+                },
+                "is_admin": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Registration successful"
+                },
+                "user_email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "user_name": {
+                    "type": "string",
+                    "example": "User Name"
+                }
+            }
+        },
+        "internal_handlers_auth.ResetPasswordResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Password updated successfully"
+                }
+            }
+        },
+        "log_relay_internal_dtos.AlreadyExistsResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "Already in use"
+                }
+            }
+        },
+        "log_relay_internal_dtos.NotFoundErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "Resource not found"
+                }
+            }
+        },
+        "log_relay_internal_dtos.ServerErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "An unexpected error occurred"
+                }
+            }
+        },
+        "log_relay_internal_dtos.UnauthorizedResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "Invalid credentials or session"
+                }
+            }
+        },
+        "log_relay_internal_dtos.ValidationErrorResponse": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "error": {
+                    "type": "string",
+                    "example": "Validation failed"
+                }
+            }
+        }
+    }
+}

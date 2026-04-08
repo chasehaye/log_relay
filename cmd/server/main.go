@@ -1,9 +1,13 @@
+// @title           Log Relay API
+// @version         1.0
+// @description     API Server for Log Relay Project.
+// @host            localhost:8080
+// @BasePath        /
 package main
 
 import (
     "log"
     "os"
-    // comment out for dev
     "net/http"
 
     "github.com/gin-gonic/gin"
@@ -18,6 +22,9 @@ import (
     "log_relay/internal/handlers/list"
     "log_relay/internal/handlers/contact"
 
+    _ "log_relay/docs"
+    swaggerFiles "github.com/swaggo/files"
+    ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
@@ -58,7 +65,8 @@ func main() {
     log.Println("--Database migration successful-")
     log.Println("--Connected---------------------")
     r := gin.Default()
-
+    r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+    // check for env variables
     // comment out for dev
     r.Use(func(c *gin.Context) {
         frontendURL := os.Getenv("FRONTEND_URL")
@@ -76,7 +84,6 @@ func main() {
 	})
     // comment out for dev^
     
-    // handlers onsite
     r.GET("/status", func(c *gin.Context) {handlers.Ping(c, db)})
     r.POST("/api/user/register", func(c *gin.Context) {auth.CreateUser(c, db)})
     r.POST("/api/user/login", func(c *gin.Context) {auth.LoginUser(c, db)})
