@@ -7,8 +7,8 @@ import (
 )
 
 type StatusResponse struct {
-    Status   string `json:"status" example:"healthy"`
-    Database string `json:"database,omitempty" example:"connected"`
+    Status   string `json:"status" example:"healthy?"`
+    Database string `json:"database,omitempty" example:"conntect?"`
 }
 
 // Ping godoc
@@ -31,5 +31,6 @@ func Ping(c *gin.Context, db *gorm.DB) {
 
     c.JSON(http.StatusOK, StatusResponse{
         Status: "healthy",
+        Database: "connected",
     })
 }
