@@ -16,6 +16,7 @@ import (
     "log_relay/internal/database"
     "log_relay/internal/models"
     "log_relay/internal/middleware"
+    "log_relay/internal/services"
 
     "log_relay/internal/handlers"
     "log_relay/internal/handlers/auth"
@@ -28,18 +29,13 @@ import (
 )
 
 func main() {
-    err := godotenv.Load()
-    if err != nil {
-        log.Fatal("Error loading .env file")
-    }
-    dbHost, ok := os.LookupEnv("POSTGRESQL_HOST")
-    if !ok {
-	    dbHost = "localhost"
-    }
-    dbPort, ok := os.LookupEnv("POSTGRESQL_PORT")
-    if !ok {
-	    dbPort = "5432"
-    }
+    _ = godotenv.Load() 
+
+    services.CheckRequiredEnvVars()
+
+
+    dbHost := os.Getenv("POSTGRESQL_HOST")
+    dbPort := os.Getenv("POSTGRESQL_PORT")
     dbPassword := os.Getenv("POSTGRESQL_PASS")
     dbUser, dbName := os.Getenv("POSTGRESQL_USER"), "log_relay"
 
