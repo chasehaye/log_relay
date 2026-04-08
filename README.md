@@ -109,7 +109,7 @@ See [`DEVELOPMENT.md`](DEVELOPMENT.md) for more details.
 
 To implement pull requests follow existing project structure. 
 
-Also make sure to correctly cofument inside of the manual section within DEVELOPMENT.md any implemented api routes.
+Also make sure to correctly dofument inside of the manual section within DEVELOPMENT.md any implemented api routes.
 
 Please follow the [Contributing](#contributing) guidelines when submitting changes.
 
