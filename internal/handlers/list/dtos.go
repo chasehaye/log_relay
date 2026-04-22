@@ -1,5 +1,8 @@
 package list
 
+import (
+	"time"
+)
 
 // --- Request DTOs ---
 type ListInput struct {
@@ -17,12 +20,13 @@ type listIndexQuery struct {
 
 // --- 200 Response DTOs ------------------------------------------------------------------------------------
 type ListResponse struct {
-	ID                uint   `json:"id"`
-	Name              string `json:"name"`
-	ListType          string `json:"list_type"`
-	PublicFacingName  string `json:"public_facing_name"`
-	PublicID          string `json:"public_id"`
-	UserID            uint   `json:"user_id"`
+	ID                uint      `json:"id"`
+	Name              string    `json:"name"`
+	ListType          string    `json:"list_type"`
+	PublicFacingName  string    `json:"public_facing_name"`
+	PublicID          string    `json:"public_id"`
+	UserID            uint      `json:"user_id"`
+	CreatedAt         time.Time `json:"created_at"`
 }
 
 type SuccessMessageResponse struct {
@@ -37,13 +41,14 @@ type ListIndexResponse struct {
 }
 
 type ListDetailResponse struct {
-	ID               uint   `json:"id"`
-	Name             string `json:"name"`
-	ListType         string `json:"list_type"`
-	PublicFacingName string `json:"public_facing_name"`
-	PublicID         string `json:"public_id"`
-	UserID           uint   `json:"user_id"`
-
+	ID               uint      `json:"id"`
+	Name             string    `json:"name"`
+	ListType         string    `json:"list_type"`
+	PublicFacingName string    `json:"public_facing_name"`
+	PublicID         string    `json:"public_id"`
+	UserID           uint      `json:"user_id"`
+    CreatedAt        time.Time `json:"created_at"`
+	
 	Messages    []MessageResponse   `json:"messages,omitempty"`
 	Subscribers []ContactResponse   `json:"subscribers,omitempty"`
 }

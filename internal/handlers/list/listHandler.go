@@ -86,6 +86,7 @@ func CreateList(c *gin.Context, db *gorm.DB) {
         PublicFacingName: newList.PublicFacingName,
         PublicID:         newList.PublicID,
         UserID:           newList.UserID,
+        CreatedAt:        newList.CreatedAt, 
     })
 }
 
@@ -185,7 +186,7 @@ func IndexList(c *gin.Context, db *gorm.DB) {
     countSubQuery := "(SELECT COUNT(*) FROM subscriber_list WHERE subscriber_list.list_id = lists.id) AS subscriber_count"
     
     result := db.Where("user_id = ?", userID).
-		Select("id", "name", "list_type", "updated_at", countSubQuery).
+		Select("id", "name", "list_type", "public_facing_name", "public_id", "user_id", "created_at", "updated_at", countSubQuery).
 		Limit(input.CountPerPage).
 		Offset(offset).
 		Order("updated_at DESC").
@@ -206,6 +207,7 @@ func IndexList(c *gin.Context, db *gorm.DB) {
 			PublicFacingName: l.PublicFacingName,
 			PublicID:         l.PublicID,
 			UserID:           l.UserID,
+            CreatedAt:        l.CreatedAt, 
 		}
 	}
 
@@ -268,6 +270,7 @@ func GetListDetail(c *gin.Context, db *gorm.DB){
 		PublicFacingName: list.PublicFacingName,
 		PublicID:         list.PublicID,
 		UserID:           list.UserID,
+        CreatedAt:        list.CreatedAt,
 	}
 
     response.Messages = make([]MessageResponse, 0, len(list.Messages))
