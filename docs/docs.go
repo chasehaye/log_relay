@@ -15,6 +15,221 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/api/list/create": {
+            "post": {
+                "description": "Create a new list and returns the created list and a success message",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lists"
+                ],
+                "summary": "Create New List",
+                "parameters": [
+                    {
+                        "description": "List Creation Data",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_list.ListInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_list.ListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ValidationErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.UnauthorizedResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.AlreadyExistsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/list/delete/{id}": {
+            "delete": {
+                "description": "Deletes a list and all associated messages",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lists"
+                ],
+                "summary": "Delete a list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "List ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_list.SuccessMessageResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.UnauthorizedResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.NotFoundErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/list/detail/{id}": {
+            "get": {
+                "description": "Returns a single list with messages and subscribers",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lists"
+                ],
+                "summary": "Get list details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "List ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_list.ListDetailResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.UnauthorizedResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.NotFoundErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/lists": {
+            "get": {
+                "description": "Returns a paginated list of user lists with metadata",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lists"
+                ],
+                "summary": "Get paginated lists",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page (1-50)",
+                        "name": "count_per_page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number (starts from 1)",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_list.ListIndexResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ValidationErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.UnauthorizedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/user/change-password/{token}": {
             "post": {
                 "description": "Validates the reset token and updates the user's password.\nAutomatically logs the user in by setting a session cookie upon success.",
@@ -379,11 +594,11 @@ const docTemplate = `{
             "properties": {
                 "database": {
                     "type": "string",
-                    "example": "connected"
+                    "example": "conntect?"
                 },
                 "status": {
                     "type": "string",
-                    "example": "healthy"
+                    "example": "healthy?"
                 }
             }
         },
@@ -542,6 +757,134 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "Password updated successfully"
+                }
+            }
+        },
+        "internal_handlers_list.ContactResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handlers_list.ListDetailResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "list_type": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_handlers_list.MessageResponse"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "public_facing_name": {
+                    "type": "string"
+                },
+                "public_id": {
+                    "type": "string"
+                },
+                "subscribers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_handlers_list.ContactResponse"
+                    }
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_handlers_list.ListIndexResponse": {
+            "type": "object",
+            "properties": {
+                "current_page": {
+                    "type": "integer"
+                },
+                "lists": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_handlers_list.ListResponse"
+                    }
+                },
+                "total_count": {
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_handlers_list.ListInput": {
+            "type": "object",
+            "required": [
+                "list_type",
+                "name",
+                "public_facing_name"
+            ],
+            "properties": {
+                "list_type": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "public_facing_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handlers_list.ListResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "list_type": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "public_facing_name": {
+                    "type": "string"
+                },
+                "public_id": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_handlers_list.MessageResponse": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "header": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_handlers_list.SuccessMessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Operation successful"
                 }
             }
         },

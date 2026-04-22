@@ -3,10 +3,10 @@ definitions:
   internal_handlers.StatusResponse:
     properties:
       database:
-        example: connected
+        example: conntect?
         type: string
       status:
-        example: healthy
+        example: healthy?
         type: string
     type: object
   internal_handlers_auth.CycleTokenResponse:
@@ -122,6 +122,90 @@ definitions:
         example: Password updated successfully
         type: string
     type: object
+  internal_handlers_list.ContactResponse:
+    properties:
+      email:
+        type: string
+    type: object
+  internal_handlers_list.ListDetailResponse:
+    properties:
+      id:
+        type: integer
+      list_type:
+        type: string
+      messages:
+        items:
+          $ref: '#/definitions/internal_handlers_list.MessageResponse'
+        type: array
+      name:
+        type: string
+      public_facing_name:
+        type: string
+      public_id:
+        type: string
+      subscribers:
+        items:
+          $ref: '#/definitions/internal_handlers_list.ContactResponse'
+        type: array
+      user_id:
+        type: integer
+    type: object
+  internal_handlers_list.ListIndexResponse:
+    properties:
+      current_page:
+        type: integer
+      lists:
+        items:
+          $ref: '#/definitions/internal_handlers_list.ListResponse'
+        type: array
+      total_count:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  internal_handlers_list.ListInput:
+    properties:
+      list_type:
+        type: string
+      name:
+        type: string
+      public_facing_name:
+        type: string
+    required:
+    - list_type
+    - name
+    - public_facing_name
+    type: object
+  internal_handlers_list.ListResponse:
+    properties:
+      id:
+        type: integer
+      list_type:
+        type: string
+      name:
+        type: string
+      public_facing_name:
+        type: string
+      public_id:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  internal_handlers_list.MessageResponse:
+    properties:
+      body:
+        type: string
+      header:
+        type: string
+      id:
+        type: integer
+    type: object
+  internal_handlers_list.SuccessMessageResponse:
+    properties:
+      message:
+        example: Operation successful
+        type: string
+    type: object
   log_relay_internal_dtos.AlreadyExistsResponse:
     properties:
       error:
@@ -163,6 +247,148 @@ info:
   title: Log Relay API
   version: "1.0"
 paths:
+  /api/list/create:
+    post:
+      consumes:
+      - application/json
+      description: Create a new list and returns the created list and a success message
+      parameters:
+      - description: List Creation Data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers_list.ListInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_handlers_list.ListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.AlreadyExistsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      summary: Create New List
+      tags:
+      - lists
+  /api/list/delete/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a list and all associated messages
+      parameters:
+      - description: List ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers_list.SuccessMessageResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      summary: Delete a list
+      tags:
+      - lists
+  /api/list/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Returns a single list with messages and subscribers
+      parameters:
+      - description: List ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers_list.ListDetailResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      summary: Get list details
+      tags:
+      - lists
+  /api/lists:
+    get:
+      consumes:
+      - application/json
+      description: Returns a paginated list of user lists with metadata
+      parameters:
+      - description: Number of items per page (1-50)
+        in: query
+        name: count_per_page
+        required: true
+        type: integer
+      - description: Page number (starts from 1)
+        in: query
+        name: page
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers_list.ListIndexResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      summary: Get paginated lists
+      tags:
+      - lists
   /api/user/change-password/{token}:
     post:
       consumes:
