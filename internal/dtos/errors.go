@@ -13,6 +13,11 @@ type UnauthorizedResponse struct {
     Error string `json:"error" example:"Invalid credentials or session"`
 }
 
+// ForbiddenResponse for 403 Autheticated but not allowed to perform action
+type ForbiddenResponse struct {
+	Error string `json:"error" example:"You do not have permission to perform this action"`
+}
+
 // NotFoundErrorResponse for 404 resource not found errors
 type NotFoundErrorResponse struct {
     Error string `json:"error" example:"Resource not found"`

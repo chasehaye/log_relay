@@ -122,6 +122,33 @@ definitions:
         example: Password updated successfully
         type: string
     type: object
+  internal_handlers_contact.EmailInput:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  internal_handlers_contact.SubscribeConfirmResponse:
+    properties:
+      list_name:
+        type: string
+      message:
+        type: string
+    type: object
+  internal_handlers_contact.SuccessResponse:
+    properties:
+      message:
+        example: Operation successful
+        type: string
+    type: object
+  internal_handlers_contact.UnsubscribeResponse:
+    properties:
+      list:
+        type: string
+      message:
+        type: string
+    type: object
   internal_handlers_list.ContactResponse:
     properties:
       email:
@@ -210,6 +237,12 @@ definitions:
     properties:
       error:
         example: Already in use
+        type: string
+    type: object
+  log_relay_internal_dtos.ForbiddenResponse:
+    properties:
+      error:
+        example: You do not have permission to perform this action
         type: string
     type: object
   log_relay_internal_dtos.NotFoundErrorResponse:
@@ -389,6 +422,137 @@ paths:
       summary: Get paginated lists
       tags:
       - lists
+  /api/subscriber/remove/{list_id}/confirm{token}:
+    delete:
+      consumes:
+      - application/json
+      description: Removes a contact from a mailing list using unsubscribe token
+      parameters:
+      - description: Public List ID
+        in: path
+        name: list_id
+        required: true
+        type: string
+      - description: Unsubscribe Token
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers_contact.UnsubscribeResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      summary: Unsubscribe from mailing list
+      tags:
+      - subscribe
+  /api/subscriber/signup/{list_id}/subscribe:
+    post:
+      consumes:
+      - application/json
+      description: Initiates email verification subscription flow for a mailing list
+      parameters:
+      - description: Public List ID
+        in: path
+        name: list_id
+        required: true
+        type: string
+      - description: Email subscription input
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers_contact.EmailInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers_contact.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ForbiddenResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+        "503":
+          description: Service Unavailable
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      summary: Subscribe to mailing list
+      tags:
+      - subscribe
+  /api/subscriber/signup/confirm:
+    get:
+      consumes:
+      - application/json
+      description: Confirms email subscription after verification
+      parameters:
+      - description: Public List ID
+        in: query
+        name: list_id
+        required: true
+        type: string
+      - description: Verification Token
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers_contact.SubscribeConfirmResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ForbiddenResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
+        "410":
+          description: Gone
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      summary: Confirm subscription
+      tags:
+      - subscribe
   /api/user/change-password/{token}:
     post:
       consumes:
