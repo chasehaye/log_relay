@@ -1,4 +1,3 @@
-// phone mailing in the future
 package models
 
 import (
@@ -16,16 +15,16 @@ const (
 )
 
 type User struct {
-    ID        uint           `gorm:"primarykey"`
+    ID        uint      `gorm:"primarykey"`
     CreatedAt time.Time
     UpdatedAt time.Time  
 
     Name      string    `gorm:"type:varchar(255)"`
-    Password  string    `gorm:"not null" json:"-"`
+    Password  string    `gorm:"not null"`
     Token     string    `gorm:"type:text"`
     Email     string    `gorm:"uniqueIndex;type:varchar(255);not null"`
 	IsAdmin   bool      `gorm:"default:false"`
-    Lists    []List    `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+    Lists     []List    `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 type PasswordReset struct {
@@ -38,24 +37,21 @@ type PasswordReset struct {
 }
 
 type List struct {
-    ID        uint           `gorm:"primarykey" json:"id"`
-    CreatedAt time.Time      `json:"created_at,omitempty"` 
-    UpdatedAt time.Time      `json:"updated_at,omitempty"` 
-
-
-    PublicID string `gorm:"uniqueIndex;type:varchar(50);not null"`
-    PublicFacingName         string `gorm:"type:varchar(255)" json:"public_facing_name"`
-    ListType  ListType `gorm:"type:varchar(30);not null" json:"list_type"`
+    ID                uint       `gorm:"primarykey"`
+    CreatedAt         time.Time
+    UpdatedAt         time.Time
+    PublicID          string     `gorm:"uniqueIndex;type:varchar(50);not null"`
+    PublicFacingName  string     `gorm:"type:varchar(255)"`
+    ListType          ListType   `gorm:"type:varchar(30);not null"`
     
-    Name      string   `gorm:"index:idx_user_list_name,unique;type:varchar(255);not null" json:"name"`
-    UserID    uint     `gorm:"index:idx_user_list_name,unique;not null" json:"-"`
-    
-    Messages []Message `gorm:"foreignKey:ListID" json:"messages,omitempty"`
-    Subscribers  []Contact `gorm:"many2many:subscriber_list;" json:"subscribers,omitempty"` //outbound
-    SubscriberCount int `gorm:"-" json:"subscriber_count"` //outbound
+    Name              string     `gorm:"index:idx_user_list_name,unique;type:varchar(255);not null"`
+    UserID            uint       `gorm:"index:idx_user_list_name,unique;not null"`
+    SubscriberCount   int        `gorm:"-"`
+
+    Messages          []Message  `gorm:"foreignKey:ListID;constraint:OnDelete:CASCADE;"`
+    Subscribers       []Contact  `gorm:"many2many:subscriber_list;constraint:OnDelete:CASCADE;"`
 }
-// should store percentage outbound success rate
-// should also have contacts sent to for outbound
+
 type Message struct {
     gorm.Model
     Header        string `gorm:"type:varchar(255)"`
