@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"log_relay/internal/services"
+	"log_relay/internal/crypt"
     "log_relay/internal/dtos"
     "net/http"
 	"github.com/gin-gonic/gin"
@@ -21,14 +21,14 @@ func AuthMiddleware() gin.HandlerFunc {
 			})
             return
         }
-        token, err := services.ValidateJWT(tokenString)
+        token, err := crypt.ValidateJWT(tokenString)
         if err != nil || token == nil || !token.Valid {
             c.AbortWithStatusJSON(http.StatusUnauthorized, dtos.UnauthorizedResponse{
 				Error: "Invalid or expired session",
 			})
             return
         }
-        uid, err := services.GetUserIDFromJWT(token)
+        uid, err := crypt.GetUserIDFromJWT(token)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, dtos.UnauthorizedResponse{
 				Error: "Failed to identify user from session",

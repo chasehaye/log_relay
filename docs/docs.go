@@ -173,6 +173,71 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/list/send-mail/{list_id}": {
+            "post": {
+                "description": "Creates a message and queues it for sending to all subscribers in a list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "messages"
+                ],
+                "summary": "Send message to mailing list",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Mailing List ID",
+                        "name": "list_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Message payload",
+                        "name": "message",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_messages.SendMessageInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_messages.SuccessMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ValidationErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.UnauthorizedResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.NotFoundErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/lists": {
             "get": {
                 "description": "Returns a paginated list of user lists with metadata",
@@ -1010,6 +1075,9 @@ const docTemplate = `{
         "internal_handlers_list.ListDetailResponse": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -1084,6 +1152,9 @@ const docTemplate = `{
         "internal_handlers_list.ListResponse": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -1119,6 +1190,30 @@ const docTemplate = `{
             }
         },
         "internal_handlers_list.SuccessMessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Operation successful"
+                }
+            }
+        },
+        "internal_handlers_messages.SendMessageInput": {
+            "type": "object",
+            "required": [
+                "body",
+                "header"
+            ],
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "header": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handlers_messages.SuccessMessageResponse": {
             "type": "object",
             "properties": {
                 "message": {

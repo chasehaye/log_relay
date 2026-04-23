@@ -1,6 +1,9 @@
 package messaging
 
-import "fmt"
+import (
+    "fmt"
+    "log_relay/internal/services"
+)
 
 // SendConfirmationEmail sends the double opt-in link to a new subscriber
 func SendConfirmationEmail(toEmail string, confirmLink string) error {
@@ -15,5 +18,5 @@ func SendConfirmationEmail(toEmail string, confirmLink string) error {
 		<p>%s</p>
 	`, confirmLink, confirmLink)
 
-	return SendMailAWS(toEmail, "Please confirm your subscription", htmlBody)
+	return services.SendMail(toEmail, "Please confirm your subscription", htmlBody)
 }

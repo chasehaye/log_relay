@@ -10,9 +10,10 @@ import(
 	"gorm.io/gorm"
 
 	"log_relay/internal/models"
-	"log_relay/internal/services"
+	"log_relay/internal/validation"
 	"log_relay/internal/messaging"
 	"log_relay/internal/dtos"
+	"log_relay/internal/crypt"
 )
 
 // ContactSubscribe godoc
@@ -41,7 +42,7 @@ func ContactSubscribe(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
-	cleanEmail, ok := services.CleanAndValidateEmail(c, input.Email)
+	cleanEmail, ok := validation.CleanAndValidateEmail(c, input.Email)
     if !ok {
         return 
     }
@@ -60,7 +61,7 @@ func ContactSubscribe(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
-	token, err := services.GenerateToken()
+	token, err := crypt.GenerateToken()
     if err != nil {
         c.JSON(http.StatusInternalServerError, dtos.ServerErrorResponse{
 			Error: "Could not generate token",
@@ -169,7 +170,7 @@ func ContactSubscribeConfirm(c *gin.Context, db *gorm.DB) {
 		}
 
 		if contact.UnSubToken == "" {
-			newUnSubToken, err := services.GenerateToken()
+			newUnSubToken, err := crypt.GenerateToken()
 			if err != nil {
 				return err
 			}

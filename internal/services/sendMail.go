@@ -1,12 +1,12 @@
-package messaging
-// fix me
+package services
+
 import (
     "fmt"
     "os"
     "net/smtp"
 )
 
-func SendMailAWS(to, subject, body string) error {
+func SendMail(to, subject, body string) error {
 
     user := os.Getenv("SMTP_USERNAME")
 	password := os.Getenv("SMTP_PASSWORD")

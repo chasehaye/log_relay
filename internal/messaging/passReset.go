@@ -1,6 +1,9 @@
 package messaging
 
-import "fmt"
+import (
+    "fmt"
+    "log_relay/internal/services"
+)
 
 func SendResetEmail(toEmail string, resetLink string) error {
     htmlBody := fmt.Sprintf(`
@@ -13,5 +16,5 @@ func SendResetEmail(toEmail string, resetLink string) error {
         <p>%s</p>
     `, resetLink, resetLink)
 
-    return SendMailAWS(toEmail, "Reset your password", htmlBody)
+    return services.SendMail(toEmail, "Reset your password", htmlBody)
 }

@@ -8,10 +8,17 @@ import (
 type ListType string
 
 const (
-	ListTypeMailing ListType = "MAILING"
-	ListTypeInquiry ListType = "INQUIRY"
-    ListTypeSupport ListType = "SUPPORT"
+	ListTypeMailing   ListType = "MAILING"
+	ListTypeInquiry   ListType = "INQUIRY"
+    ListTypeSupport   ListType = "SUPPORT"
     ListTypeCatchAll  ListType = "CATCH_ALL"
+)
+
+type MessageType string
+
+const (
+    MessageTypeOutbound MessageType = "OUTBOUND"
+    MessageTypeInbound  MessageType = "INBOUND"
 )
 
 type User struct {
@@ -56,29 +63,31 @@ type Message struct {
     gorm.Model
     Header        string `gorm:"type:varchar(255)"`
     Body          string `gorm:"type:text;not null"`
-    ListID        uint   `gorm:"index"` // list association
-    Type    string  `gorm:"type:varchar(20)"` // "INBOUND" or "OUTBOUND"
-    StatusOutBound     string `gorm:"type:varchar(20);default:'PENDING'"`
+    ListID        uint   `gorm:"index"` 
+    Type          MessageType  `gorm:"type:varchar(20);not null"`
 
-
-    StatusInBound     string `gorm:"type:varchar(20);default:'PENDING'"`
+    
     Importance    string `gorm:"type:varchar(30)"` // for inbound
     ContactID     uint    `gorm:"index"` // contact association, for inbound
 }
 
 type Contact struct {
-    gorm.Model `json:"-"`
-    UserID       uint   `gorm:"uniqueIndex:idx_user_email;not null" json:"user_id"`
-    Email        string `gorm:"uniqueIndex:idx_user_email;type:varchar(255);not null" json:"email"`
-    Name         string `gorm:"type:varchar(255)" json:"name"`
+    gorm.Model
+    UserID            uint   `gorm:"uniqueIndex:idx_user_email;not null"`
+    Email             string `gorm:"uniqueIndex:idx_user_email;type:varchar(255);not null"`
+    Name              string `gorm:"type:varchar(255)"`
+    
     // subscribe to mailing list
-    Verified          bool   `gorm:"default:false" json:"verified"`
-    VerificationToken string `gorm:"index" json:"-"`
-    TokenExpiresAt    time.Time `json:"-"`
+    Verified          bool   `gorm:"default:false"`
+    VerificationToken string `gorm:"index"`
+    TokenExpiresAt    time.Time
     // unsubscribe to mailing list
-    UnSubToken string `gorm:"index" json:"-"`
-    Unsubscribed      bool      `gorm:"default:false" json:"unsubscribed"`
+    UnSubToken        string `gorm:"index"`
+
+
+
+
 
     // Messages     []Message `gorm:"foreignKey:ContactID"` // for messages to user type, not for mailing list type
-    SubscribedTo        []List    `gorm:"many2many:subscriber_list;" json:"subscribed_to,omitempty"`
+    SubscribedTo        []List    `gorm:"many2many:subscriber_list;"`
 }

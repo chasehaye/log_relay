@@ -156,6 +156,8 @@ definitions:
     type: object
   internal_handlers_list.ListDetailResponse:
     properties:
+      created_at:
+        type: string
       id:
         type: integer
       list_type:
@@ -205,6 +207,8 @@ definitions:
     type: object
   internal_handlers_list.ListResponse:
     properties:
+      created_at:
+        type: string
       id:
         type: integer
       list_type:
@@ -228,6 +232,22 @@ definitions:
         type: integer
     type: object
   internal_handlers_list.SuccessMessageResponse:
+    properties:
+      message:
+        example: Operation successful
+        type: string
+    type: object
+  internal_handlers_messages.SendMessageInput:
+    properties:
+      body:
+        type: string
+      header:
+        type: string
+    required:
+    - body
+    - header
+    type: object
+  internal_handlers_messages.SuccessMessageResponse:
     properties:
       message:
         example: Operation successful
@@ -384,6 +404,50 @@ paths:
       summary: Get list details
       tags:
       - lists
+  /api/list/send-mail/{list_id}:
+    post:
+      consumes:
+      - application/json
+      description: Creates a message and queues it for sending to all subscribers
+        in a list
+      parameters:
+      - description: Mailing List ID
+        in: path
+        name: list_id
+        required: true
+        type: integer
+      - description: Message payload
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers_messages.SendMessageInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_handlers_messages.SuccessMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      summary: Send message to mailing list
+      tags:
+      - messages
   /api/lists:
     get:
       consumes:

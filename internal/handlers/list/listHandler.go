@@ -8,7 +8,7 @@ import (
     "math"
 
 	"log_relay/internal/models"
-	"log_relay/internal/services"
+	"log_relay/internal/crypt"
     "log_relay/internal/dtos"
 )
 
@@ -49,7 +49,7 @@ func CreateList(c *gin.Context, db *gorm.DB) {
     }
     userID := uidValue.(uint)
 
-    publicID, err := services.GenerateToken()
+    publicID, err := crypt.GenerateToken()
     if err != nil {
         c.JSON(http.StatusInternalServerError, dtos.ServerErrorResponse{
             Error: "Failed to generate list identifier",

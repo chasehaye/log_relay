@@ -16,12 +16,13 @@ import (
     "log_relay/internal/database"
     "log_relay/internal/models"
     "log_relay/internal/middleware"
-    "log_relay/internal/services"
+    "log_relay/internal/config"
 
     "log_relay/internal/handlers"
     "log_relay/internal/handlers/auth"
     "log_relay/internal/handlers/list"
     "log_relay/internal/handlers/contact"
+    "log_relay/internal/handlers/messages"
 
     _ "log_relay/docs"
     swaggerFiles "github.com/swaggo/files"
@@ -31,7 +32,7 @@ import (
 func main() {
     _ = godotenv.Load() 
 
-    services.CheckRequiredEnvVars()
+    config.CheckRequiredEnvVars()
 
 
     dbHost := os.Getenv("POSTGRESQL_HOST")
@@ -60,10 +61,11 @@ func main() {
     }
     log.Println("--Database migration successful-")
     log.Println("--Connected---------------------")
+
     r := gin.Default()
+
     r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-    // check for env variables
-    // comment out for dev
+
     r.Use(func(c *gin.Context) {
         frontendURL := os.Getenv("FRONTEND_URL")
 		c.Writer.Header().Set("Access-Control-Allow-Origin", frontendURL)
@@ -78,14 +80,14 @@ func main() {
 		}
 		c.Next()
 	})
-    // comment out for dev^
     
+
+
     r.GET("/status", func(c *gin.Context) {handlers.Ping(c, db)})
     r.POST("/api/user/register", func(c *gin.Context) {auth.CreateUser(c, db)})
     r.POST("/api/user/login", func(c *gin.Context) {auth.LoginUser(c, db)})
     r.POST("/api/user/forgot-password", func(c *gin.Context) {auth.ForgotPassword(c, db)})
     r.POST("/api/user/change-password/:token", func(c *gin.Context) {auth.ResetPassword(c, db)})
-
 
     r.POST("/api/subscriber/signup/:list_id", func(c *gin.Context) { contact.ContactSubscribe(c, db)})
     r.GET("/api/subscriber/signup/confirm", func(c *gin.Context) { contact.ContactSubscribeConfirm(c, db)})
@@ -105,6 +107,7 @@ func main() {
         protected.GET("/list/index", func(c *gin.Context) { list.IndexList(c, db) })
         protected.GET("/list/detail/:id", func(c *gin.Context) { list.GetListDetail(c, db) })
         
+        protected.POST("/list/send-mail/:list_id", func(c *gin.Context) { messages.SendMailingListMessage(c, db)})
     }
     r.Run() // Default is port 8080
 

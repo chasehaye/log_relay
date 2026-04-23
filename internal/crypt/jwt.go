@@ -1,17 +1,13 @@
-package services
+package crypt
 
 import (
 	"os"
 	"time"
 	"errors"
-	"crypto/rand"
-	"encoding/base64"
-	"log"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
-	"crypto/sha256"
-    "encoding/hex"
+
 )
 
 var jwtSecret []byte
@@ -60,25 +56,4 @@ func ValidateJWT(tokenString string) (*jwt.Token, error) {
 		}
 		return jwtSecret, nil
 	})
-}
-
-// api
-func GenerateToken() (string, error) {
-    tokenBytes := make([]byte, 32)
-    if _, err := rand.Read(tokenBytes); err != nil {
-        log.Printf("CRITICAL: Entropy failure: %v", err)
-        return "", err
-    }
-    return base64.RawURLEncoding.EncodeToString(tokenBytes), nil
-}
-
-func GenerateHashedToken() (string, string, error) {
-    plainToken, err := GenerateToken()
-    if err != nil {
-        return "", "", err
-    }
-    hash := sha256.Sum256([]byte(plainToken))
-    hashedToken := hex.EncodeToString(hash[:])
-
-    return plainToken, hashedToken, nil
 }

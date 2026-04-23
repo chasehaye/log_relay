@@ -1,21 +1,23 @@
 package auth
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strings"
-	"fmt"
 	"time"
-    "log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"gorm.io/gorm"
-    "github.com/joho/godotenv"
 
-	"log_relay/internal/models"
-	"log_relay/internal/services"
+	"log_relay/internal/crypt"
+	"log_relay/internal/dtos"
 	"log_relay/internal/messaging"
-    "log_relay/internal/dtos"
+	"log_relay/internal/models"
+	"log_relay/internal/validation"
+    "log_relay/internal/config"
 )
 
 var (
@@ -57,7 +59,7 @@ func CreateUser(c *gin.Context, db *gorm.DB) {
         return
 	}
 
-	cleanEmail, ok := services.CleanAndValidateEmail(c, input.Email)
+	cleanEmail, ok := validation.CleanAndValidateEmail(c, input.Email)
     if !ok {
         return 
     }
@@ -79,17 +81,17 @@ func CreateUser(c *gin.Context, db *gorm.DB) {
 		displayName = "User" 
 	}
 
-    if err := services.ValidatePassword(input.Password); err != nil {
+    if err := validation.ValidatePassword(input.Password); err != nil {
         c.JSON(http.StatusBadRequest, dtos.ValidationErrorResponse{Error: err.Error(),})
         return
     }
-	hashedPassword, err := services.HashPassword(input.Password)
+	hashedPassword, err := validation.HashPassword(input.Password)
 	if err != nil {
         log.Printf("Password hashing error: %v", err)
 		c.JSON(http.StatusInternalServerError, dtos.ServerErrorResponse{Error: "An unexpected error occurred. Please try again later."})
 		return
 	}
-    plainToken, hashedToken, err := services.GenerateHashedToken()
+    plainToken, hashedToken, err := crypt.GenerateHashedToken()
     if err != nil {
         log.Printf("Api token generation and hashing failed: %v", err)
         c.JSON(http.StatusInternalServerError, dtos.ServerErrorResponse{Error: "An unexpected error occurred. Please try again later."})
@@ -113,7 +115,7 @@ func CreateUser(c *gin.Context, db *gorm.DB) {
         return
     }
 
-    jwtToken, err := services.GenerateJWT(user.ID, user.Email)
+    jwtToken, err := crypt.GenerateJWT(user.ID, user.Email)
     if err != nil {
         c.JSON(http.StatusInternalServerError, dtos.ServerErrorResponse{Error: "Failed to create session"})
         return
@@ -125,7 +127,7 @@ func CreateUser(c *gin.Context, db *gorm.DB) {
         86400,      // MaxAge (24 hours in seconds)
         "/",        // Path
         "",         // Domain (leave empty for current domain)
-        services.IsProduction(),      // Secure (SET TO TRUE IN PRODUCTION/HTTPS)
+        config.IsProduction(),      // Secure (SET TO TRUE IN PRODUCTION/HTTPS)
         true,       // HttpOnly (CRITICAL: prevents JS access)
     )
 
@@ -165,7 +167,7 @@ func LoginUser(c *gin.Context, db *gorm.DB) {
         return
 	}
 
-	cleanEmail, ok := services.CleanAndValidateEmail(c, input.Email)
+	cleanEmail, ok := validation.CleanAndValidateEmail(c, input.Email)
     if !ok {
         return 
     }
@@ -177,12 +179,12 @@ func LoginUser(c *gin.Context, db *gorm.DB) {
         return
     }
 
-    if err := services.ComparePassword(user.Password, input.Password); err != nil {
+    if err := validation.ComparePassword(user.Password, input.Password); err != nil {
         c.JSON(http.StatusUnauthorized, dtos.UnauthorizedResponse{Error: "Invalid credentials"})
         return
     }
 
-	jwtToken, err := services.GenerateJWT(user.ID, user.Email)
+	jwtToken, err := crypt.GenerateJWT(user.ID, user.Email)
     if err != nil {
         c.JSON(http.StatusInternalServerError, dtos.ServerErrorResponse{Error: "Failed to create session"})
         return
@@ -194,7 +196,7 @@ func LoginUser(c *gin.Context, db *gorm.DB) {
         86400,
         "/",
         "",
-        services.IsProduction(),
+        config.IsProduction(),
         true,
     )
 
@@ -240,12 +242,12 @@ func CycleToken(c *gin.Context, db *gorm.DB) {
         return
     }
 
-	if err := services.ComparePassword(user.Password, input.Password); err != nil {
+	if err := validation.ComparePassword(user.Password, input.Password); err != nil {
         c.JSON(http.StatusUnauthorized, dtos.UnauthorizedResponse{Error: "Invalid credentials",})
         return
     }
 
-	plainToken, hashedToken, err := services.GenerateHashedToken()
+	plainToken, hashedToken, err := crypt.GenerateHashedToken()
     if err != nil {
         c.JSON(http.StatusInternalServerError, dtos.ServerErrorResponse{Error: "Failed to cycle token",})
         return
@@ -287,7 +289,7 @@ func ForgotPassword(c *gin.Context, db *gorm.DB){
         return
 	}
 
-	cleanEmail, ok := services.CleanAndValidateEmail(c, input.Email)
+	cleanEmail, ok := validation.CleanAndValidateEmail(c, input.Email)
     if !ok {
         return 
     }
@@ -303,7 +305,7 @@ func ForgotPassword(c *gin.Context, db *gorm.DB){
         return
     }
 
-	token, err := services.GenerateToken()
+	token, err := crypt.GenerateToken()
     if err != nil {
         c.JSON(http.StatusOK, ForgotPasswordResponse{Message: "Check your inbox for a reset link"})
         return
@@ -379,7 +381,7 @@ func ResetPassword(c *gin.Context, db *gorm.DB) {
         return
     }
 
-    hashedPassword, err := services.HashPassword(input.Password)
+    hashedPassword, err := validation.HashPassword(input.Password)
     if err != nil {
         log.Printf("Bcrypt hashing failed: %v", err)
 		c.JSON(http.StatusInternalServerError, dtos.ServerErrorResponse{Error: "Failed to process password"})
@@ -402,7 +404,7 @@ func ResetPassword(c *gin.Context, db *gorm.DB) {
         return
     }
 
-	jwtToken, err := services.GenerateJWT(resetRecord.User.ID, resetRecord.User.Email)
+	jwtToken, err := crypt.GenerateJWT(resetRecord.User.ID, resetRecord.User.Email)
     if err != nil {
         c.JSON(http.StatusInternalServerError, dtos.ServerErrorResponse{Error: "Password updated, please login manually"})
         return
@@ -414,7 +416,7 @@ func ResetPassword(c *gin.Context, db *gorm.DB) {
         86400,
         "/",
         "",
-        services.IsProduction(),
+        config.IsProduction(),
         true,
     )
 
@@ -434,7 +436,7 @@ func ResetPassword(c *gin.Context, db *gorm.DB) {
 // @Failure      500  {object}  dtos.ServerErrorResponse
 // @Router       /api/user/logout [post]
 func LogOut(c *gin.Context, db *gorm.DB) {
-    c.SetCookie("token", "", -1, "/", "", services.IsProduction(), true)
+    c.SetCookie("token", "", -1, "/", "", config.IsProduction(), true)
 
     c.JSON(http.StatusOK, LogOutResponse{Message: "Successfully logged out",})
 }
