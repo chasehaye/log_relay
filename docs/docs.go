@@ -173,7 +173,64 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/list/send-mail/{list_id}": {
+        "/api/lists": {
+            "get": {
+                "description": "Returns a paginated list of user lists with metadata",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lists"
+                ],
+                "summary": "Get paginated lists",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page (1-50)",
+                        "name": "count_per_page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number (starts from 1)",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_list.ListIndexResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ValidationErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.UnauthorizedResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/mail/send/{list_id}": {
             "post": {
                 "description": "Creates a message and queues it for sending to all subscribers in a list",
                 "consumes": [
@@ -227,63 +284,6 @@ const docTemplate = `{
                         "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/log_relay_internal_dtos.NotFoundErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/lists": {
-            "get": {
-                "description": "Returns a paginated list of user lists with metadata",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "lists"
-                ],
-                "summary": "Get paginated lists",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Number of items per page (1-50)",
-                        "name": "count_per_page",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Page number (starts from 1)",
-                        "name": "page",
-                        "in": "query",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/internal_handlers_list.ListIndexResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/log_relay_internal_dtos.ValidationErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/log_relay_internal_dtos.UnauthorizedResponse"
                         }
                     },
                     "500": {

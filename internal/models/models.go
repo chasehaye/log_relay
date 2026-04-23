@@ -53,7 +53,7 @@ type List struct {
     
     Name              string     `gorm:"index:idx_user_list_name,unique;type:varchar(255);not null"`
     UserID            uint       `gorm:"index:idx_user_list_name,unique;not null"`
-    SubscriberCount   int        `gorm:"-"`
+    // SubscriberCount   int        `gorm:"-"`
 
     Messages          []Message  `gorm:"foreignKey:ListID;constraint:OnDelete:CASCADE;"`
     Subscribers       []Contact  `gorm:"many2many:subscriber_list;constraint:OnDelete:CASCADE;"`
@@ -76,18 +76,16 @@ type Contact struct {
     UserID            uint   `gorm:"uniqueIndex:idx_user_email;not null"`
     Email             string `gorm:"uniqueIndex:idx_user_email;type:varchar(255);not null"`
     Name              string `gorm:"type:varchar(255)"`
-    
     // subscribe to mailing list
     Verified          bool   `gorm:"default:false"`
     VerificationToken string `gorm:"index"`
     TokenExpiresAt    time.Time
+    SubscribedTo        []List    `gorm:"many2many:subscriber_list;"`
+
+
+
+
     // unsubscribe to mailing list
     UnSubToken        string `gorm:"index"`
-
-
-
-
-
     // Messages     []Message `gorm:"foreignKey:ContactID"` // for messages to user type, not for mailing list type
-    SubscribedTo        []List    `gorm:"many2many:subscriber_list;"`
 }

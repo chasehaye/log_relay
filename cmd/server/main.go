@@ -107,7 +107,7 @@ func main() {
         protected.GET("/list/index", func(c *gin.Context) { list.IndexList(c, db) })
         protected.GET("/list/detail/:id", func(c *gin.Context) { list.GetListDetail(c, db) })
         
-        protected.POST("/list/send-mail/:list_id", func(c *gin.Context) { messages.SendMailingListMessage(c, db)})
+        protected.POST("/mail/send/:list_id", func(c *gin.Context) { messages.SendMailingListMessage(c, db)})
     }
     r.Run() // Default is port 8080
 

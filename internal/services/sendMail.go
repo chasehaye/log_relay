@@ -1,38 +1,58 @@
 package services
 
 import (
-    "fmt"
-    "os"
-    "net/smtp"
+	"context"
+	"fmt"
+	"os"
+
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ses"
+	"github.com/aws/aws-sdk-go-v2/service/ses/types"
 )
 
-func SendMail(to, subject, body string) error {
+var (
+	sesClient     *ses.Client
+	senderAddress string
+)
 
-    user := os.Getenv("SMTP_USERNAME")
-	password := os.Getenv("SMTP_PASSWORD")
-	host := os.Getenv("AMAZON_HOST")
-	from := os.Getenv("SENDER_ADDRESS")
-	port := "587"
+func init() {
+	senderAddress = os.Getenv("SENDER_ADDRESS")
 
-    addr := host + ":" + port
-
-    messageStr := fmt.Sprintf(
-		"From: Fude Software <%s>\r\n"+
-			"To: %s\r\n"+
-			"Subject: %s\r\n"+
-			"MIME-Version: 1.0\r\n"+
-			"Content-Type: text/html; charset=\"utf-8\"\r\n"+
-			"\r\n"+
-			"%s",
-		from, to, subject, body,
+	cfg, err := config.LoadDefaultConfig(
+		context.TODO(),
+		config.WithRegion(os.Getenv("AWS_DEFAULT_REGION")),
 	)
-
-    auth := smtp.PlainAuth("", user, password, host)
-
-	err := smtp.SendMail(addr, auth, from, []string{to}, []byte(messageStr))
 	if err != nil {
-		return fmt.Errorf("AWS SES send failed: %w", err)
+		panic(fmt.Errorf("aws config init error: %w", err))
 	}
 
+	sesClient = ses.NewFromConfig(cfg)
+}
+
+func SendMail(to, subject, body string) error {
+	input := &ses.SendEmailInput{
+		Source: &senderAddress,
+		Destination: &types.Destination{
+			ToAddresses: []string{to},
+		},
+		Message: &types.Message{
+			Subject: &types.Content{
+				Data: &subject,
+			},
+			Body: &types.Body{
+				Html: &types.Content{
+					Data: &body,
+				},
+			},
+		},
+	}
+
+	_, err := sesClient.SendEmail(context.TODO(), input)
+
+	if err != nil {
+		fmt.Printf("SES ERROR: %v\n", err)
+		return fmt.Errorf("ses send failed: %w", err)
+	}
+	
 	return nil
 }

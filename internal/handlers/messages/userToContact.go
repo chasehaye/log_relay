@@ -9,6 +9,7 @@ import(
 
 	"log_relay/internal/models"
 	"log_relay/internal/dtos"
+	"log_relay/internal/services"
 )
 
 // SendMailingListMessage godoc
@@ -24,7 +25,7 @@ import(
 // @Failure      401 {object} dtos.UnauthorizedResponse
 // @Failure      404 {object} dtos.NotFoundErrorResponse
 // @Failure      500 {object} dtos.ServerErrorResponse
-// @Router       /api/list/send-mail/{list_id} [post]
+// @Router       /api/mail/send/{list_id} [post]
 func SendMailingListMessage(c *gin.Context, db *gorm.DB) {
 	var input SendMessageInput
 
@@ -79,8 +80,8 @@ func SendMailingListMessage(c *gin.Context, db *gorm.DB) {
 		Message: "Message created and queued for sending",
 	})
 
-	// store message → launch goroutine → goroutine loads list + subscribers → sends emails
-	// mvp with simple go
-	// later implement worker pools and channels
+	go func(messageID uint) {
+		services.SendMailingList(messageID, db)
+	}(message.ID)
 
 }
