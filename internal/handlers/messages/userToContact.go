@@ -79,7 +79,8 @@ func SendMailingListMessage(c *gin.Context, db *gorm.DB) {
 		Message: "Message created and queued for sending",
 	})
 
-
-	// have it later send out mail via go routines
+	// store message → launch goroutine → goroutine loads list + subscribers → sends emails
+	// mvp with simple go
+	// later implement worker pools and channels
 
 }
