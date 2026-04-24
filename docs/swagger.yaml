@@ -253,6 +253,38 @@ definitions:
         example: Operation successful
         type: string
     type: object
+  internal_handlers_user.ChangeEmailInput:
+    properties:
+      email:
+        example: user@example.com
+        maxLength: 255
+        type: string
+    required:
+    - email
+    type: object
+  internal_handlers_user.ChangeUsernameInput:
+    properties:
+      name:
+        example: User Name
+        maxLength: 255
+        type: string
+    type: object
+  internal_handlers_user.PasswordInput:
+    properties:
+      password:
+        example: SecurePass123!
+        maxLength: 72
+        minLength: 8
+        type: string
+    required:
+    - password
+    type: object
+  internal_handlers_user.SuccessMessageResponse:
+    properties:
+      message:
+        example: Successfully updated the username
+        type: string
+    type: object
   log_relay_internal_dtos.AlreadyExistsResponse:
     properties:
       error:
@@ -861,4 +893,129 @@ paths:
       summary: Health Check
       tags:
       - system
+  /user/account/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Permanently deletes the authenticated user's account after verifying
+        password
+      parameters:
+      - description: User password confirmation
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers_user.PasswordInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers_user.SuccessMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete user account
+      tags:
+      - user
+  /user/change/email:
+    patch:
+      consumes:
+      - application/json
+      description: Updates the authenticated user's email address
+      parameters:
+      - description: New email
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers_user.ChangeEmailInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers_user.SuccessMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.AlreadyExistsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Change email
+      tags:
+      - user
+  /user/change/username:
+    patch:
+      consumes:
+      - application/json
+      description: Updates the authenticated user's display name
+      parameters:
+      - description: New username
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers_user.ChangeUsernameInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers_user.SuccessMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Change username
+      tags:
+      - user
 swagger: "2.0"

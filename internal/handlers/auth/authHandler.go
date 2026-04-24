@@ -232,7 +232,13 @@ func CycleToken(c *gin.Context, db *gorm.DB) {
         return
 	}
 
-    uidValue, _ := c.Get("userID")
+    uidValue, exists := c.Get("userID")
+    if !exists {
+		c.JSON(http.StatusUnauthorized, dtos.UnauthorizedResponse{
+			Error: "Invalid session",
+		})
+		return
+	}
     userID := uidValue.(uint)
 
 	var user models.User
