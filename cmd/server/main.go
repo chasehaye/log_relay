@@ -77,6 +77,7 @@ func main() {
         r.Use(gin.Logger())
     }
 
+    
     r.Use(func(c *gin.Context) {
         origin := c.Request.Header.Get("Origin")
         allowedOrigins := []string{
