@@ -27,7 +27,6 @@ services:
       - .env
     volumes:
       - type: bind
-        source: "/go/pkg/mod}"
         target: /go/pkg/mod
       - type: bind
         source: .
