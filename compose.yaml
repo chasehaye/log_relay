@@ -6,15 +6,13 @@ services:
     networks:
       - fude_bridge
     ports:
-      - 5432:5432
+      - "5432:5432"
     environment:
-        - POSTGRES_DB=log_relay
-        - POSTGRES_USER=log_relay
-        - POSTGRES_PASSWORD=devpass
+      POSTGRES_DB: log_relay
+      POSTGRES_USER: log_relay
+      POSTGRES_PASSWORD: devpass
     volumes:
-      - type: bind
-        source: ./.data/db
-        target: /var/lib/postgresql
+      - /mnt/drive1/postgres_data:/var/lib/postgresql/data
   log_relay:
     image: golang:1.26
     container_name: log_relay-svc
@@ -24,11 +22,9 @@ services:
     networks:
       - fude_bridge
     ports:
-      - 8080:8080
-    environment:
-        - POSTGRES_DB=log_relay
-        - POSTGRES_USER=log_relay
-        - POSTGRES_PASSWORD=devpass
+      - "30000:30000"
+    env_file:
+      - .env
     volumes:
       - type: bind
         source: "${GOMODCACHE:-$HOME/go/pkg/mod}"

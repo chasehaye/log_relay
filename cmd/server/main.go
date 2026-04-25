@@ -32,20 +32,25 @@ import (
 
 func main() {
     _ = godotenv.Load() 
-
     config.CheckRequiredEnvVars()
 
+    env := os.Getenv("GO_ENV")
+    if env == "prod" {
+        log.Println("Running in Production mode")
+        gin.SetMode(gin.ReleaseMode)
+    } else {
+        log.Println("Running in Development mode")
+        gin.SetMode(gin.DebugMode)
+    }
 
     dbHost := os.Getenv("POSTGRESQL_HOST")
     dbPort := os.Getenv("POSTGRESQL_PORT")
     dbPassword := os.Getenv("POSTGRESQL_PASS")
     dbUser, dbName := os.Getenv("POSTGRESQL_USER"), "log_relay"
-
     db, err := database.ConnectToDB(dbHost, dbUser, dbPassword, dbName, dbPort)
     if err != nil {
         log.Fatalln("Failed to connect to database:", err)
     }
-    
     sqlDB, err := db.DB()
     if err != nil {
         log.Fatalln("Failed to get generic database object:", err)
@@ -56,6 +61,7 @@ func main() {
     defer sqlDB.Close()
     log.Println("--Database connection verified--")
 
+
     err = db.AutoMigrate(&models.User{}, &models.PasswordReset{}, &models.List{}, &models.Message{}, &models.Contact{},)
     if err != nil {
         log.Fatalf("Migration failed: %v", err)
@@ -65,24 +71,32 @@ func main() {
 
     r := gin.Default()
 
-    r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
     r.Use(func(c *gin.Context) {
-        frontendURL := os.Getenv("FRONTEND_URL")
-		c.Writer.Header().Set("Access-Control-Allow-Origin", frontendURL)
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
-        c.Writer.Header().Set("Access-Control-Max-Age", "86400")
-
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(http.StatusNoContent)
-			return
-		}
-		c.Next()
-	})
+        origin := c.Request.Header.Get("Origin")
+        allowedOrigins := []string{
+            os.Getenv("FRONTEND_URL"),
+            os.Getenv("FRONTEND_URL2"),
+        }
+        for _, o := range allowedOrigins {
+            if o == origin {
+                c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+                c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+                break
+            }
+        }
+        c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+        c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        
+        if c.Request.Method == "OPTIONS" {
+            c.AbortWithStatus(http.StatusNoContent)
+            return
+        }
+        c.Next()
+    })
     
-
+    if env == "dev" {
+        r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+    }
 
     r.GET("/status", func(c *gin.Context) {handlers.Ping(c, db)})
     r.POST("/api/user/register", func(c *gin.Context) {auth.CreateUser(c, db)})
@@ -114,6 +128,12 @@ func main() {
         
         protected.POST("/mail/send/:list_id", func(c *gin.Context) { messages.SendMailingListMessage(c, db) })
     }
-    r.Run() // Default is port 8080
+
+    port := os.Getenv("PORT")
+    if port == "" {
+        port = "8080"
+    }
+    log.Printf("Server starting on port %s in %s mode...", port, env)
+    r.Run(":" + port)
 
 }

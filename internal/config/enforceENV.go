@@ -19,7 +19,6 @@ func CheckRequiredEnvVars() {
 		// "AWS_SECRET_ACCESS_KEY",
 		// "AWS_DEFAULT_REGION",
 		"SENDER_ADDRESS",
-		"GIN_MODE",
 		"PORT",
 	}
 
