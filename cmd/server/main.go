@@ -69,7 +69,13 @@ func main() {
     log.Println("--Database migration successful-")
     log.Println("--Connected---------------------")
 
-    r := gin.Default()
+    r := gin.New()
+
+    r.Use(gin.Recovery())
+
+    if env != "prod" {
+        r.Use(gin.Logger())
+    }
 
     r.Use(func(c *gin.Context) {
         origin := c.Request.Header.Get("Origin")
