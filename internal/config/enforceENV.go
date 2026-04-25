@@ -21,6 +21,7 @@ func CheckRequiredEnvVars() {
 		"SENDER_ADDRESS",
 		"PORT",
 	}
+	
 	for _, v := range required {
 		if os.Getenv(v) == "" {
 			log.Fatalf("CRITICAL CONFIG ERROR: Environment variable '%s' is missing. Server cannot start.", v)
