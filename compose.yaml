@@ -27,7 +27,7 @@ services:
       - .env
     volumes:
       - type: bind
-        source: "${GOMODCACHE:-$HOME/go/pkg/mod}"
+        source: "/go/pkg/mod}"
         target: /go/pkg/mod
       - type: bind
         source: .
