@@ -71,6 +71,8 @@ func main() {
 
     r := gin.New()
 
+    r.SetTrustedProxies([]string{"127.0.0.1", "::1"})
+
     r.Use(gin.Recovery())
 
     if env != "prod" {
