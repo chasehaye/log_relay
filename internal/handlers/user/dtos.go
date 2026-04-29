@@ -15,3 +15,7 @@ type SuccessMessageResponse struct {
 type PasswordInput struct {
 	Password string `json:"password" binding:"required,min=8,max=72" example:"SecurePass123!"`
 }
+
+type ChangeEmailConfirmInput struct {
+	Token string `json:"token"`
+}

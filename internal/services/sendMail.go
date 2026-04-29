@@ -57,7 +57,6 @@ func SendMail(to, subject, body string) error {
 	return nil
 }
 
-// append the mail unsub to the end of the body 
 
 func SendMailListItem(to, subject, body string, unsubLink string) error {
 	htmlBody := fmt.Sprintf(`

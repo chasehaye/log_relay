@@ -1,16 +1,31 @@
 package user
 
 import (
-	"net/http"
+	"fmt"
 	"log"
+	"net/http"
+	"os"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"log_relay/internal/models"
+	"log_relay/internal/crypt"
 	"log_relay/internal/dtos"
+	"log_relay/internal/messaging"
+	"log_relay/internal/models"
 	"log_relay/internal/validation"
 )
+
+var (
+    frontendURL string
+)
+
+func init() {
+    frontendURL = strings.TrimSuffix(os.Getenv("FRONTEND_URL"), "/")
+}
+
 
 // ChangeUsername godoc
 // @Summary Change username
@@ -70,14 +85,14 @@ func ChangeUsername(c *gin.Context, db *gorm.DB) {
 	})
 }
 
-// ChangeEmail godoc
-// @Summary Change email
-// @Description Updates the authenticated user's email address
-// @Tags user
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param input body ChangeEmailInput true "New email"
+// ChangeEmailRequest godoc
+// @Summary      Request email change
+// @Description  Sends a confirmation email to complete the email change process
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        input  body      ChangeEmailInput  true  "New email address"
 // @Success 200 {object} SuccessMessageResponse
 // @Failure 400 {object} dtos.ValidationErrorResponse
 // @Failure 401 {object} dtos.UnauthorizedResponse
@@ -122,26 +137,100 @@ func ChangeEmail(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
-	result := db.Model(&models.User{}).
-		Where("id = ?", userID).
-		Update("email", cleanEmail)
-
-	if result.Error != nil {
+	token, err := crypt.GenerateToken()
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, dtos.ServerErrorResponse{
-			Error: "Failed to update email",
+			Error: "Server Error",
+		})
+		return
+	}
+	req := models.EmailChangeRequest{
+		UserID:    userID,
+		NewEmail:  cleanEmail,
+		Token:     token,
+		ExpiresAt: time.Now().Add(30 * time.Minute),
+	}
+
+	if err := db.Create(&req).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, dtos.ServerErrorResponse{
+			Error: "Failed to create change request",
+		})
+		return
+	}
+	link := fmt.Sprintf("%s/change-email/confirm?token=%s", frontendURL, token)
+
+	err = messaging.SendResetEmailChangeEmail(cleanEmail, link)
+
+	c.JSON(http.StatusOK, SuccessMessageResponse{
+		Message: "Confirmation sent check inbox",
+	})
+}
+
+
+func ChangeEmailConfirm(c *gin.Context, db *gorm.DB) {
+	var input ChangeEmailConfirmInput
+
+	if err := c.ShouldBindJSON(&input); err != nil || input.Token == "" {
+		c.JSON(http.StatusBadRequest, dtos.ValidationErrorResponse{
+			Error: "Missing token",
 		})
 		return
 	}
 
-	if result.RowsAffected == 0 {
+	token := input.Token
+
+	var req models.EmailChangeRequest
+	err := db.Where("token = ?", token).First(&req).Error
+	if err != nil {
+		c.JSON(http.StatusNotFound, dtos.NotFoundErrorResponse{
+			Error: "Invalid or expired token",
+		})
+		return
+	}
+
+	if req.Used {
+		c.JSON(http.StatusBadRequest, dtos.ValidationErrorResponse{
+			Error: "Token already used",
+		})
+		return
+	}
+
+	if time.Now().After(req.ExpiresAt) {
+		c.JSON(http.StatusBadRequest, dtos.ValidationErrorResponse{
+			Error: "Token expired",
+		})
+		return
+	}
+
+	var user models.User
+	if err := db.First(&user, req.UserID).Error; err != nil {
 		c.JSON(http.StatusNotFound, dtos.NotFoundErrorResponse{
 			Error: "User not found",
 		})
 		return
 	}
 
+	err = db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&user).Update("email", req.NewEmail).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Model(&req).Update("used", true).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dtos.ServerErrorResponse{
+			Error: "Failed to update email",
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, SuccessMessageResponse{
-		Message: "email updated successfully",
+		Message: "Email updated successfully",
 	})
 }
 

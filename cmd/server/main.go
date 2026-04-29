@@ -62,7 +62,7 @@ func main() {
     log.Println("--Database connection verified--")
 
 
-    err = db.AutoMigrate(&models.User{}, &models.PasswordReset{}, &models.List{}, &models.Message{}, &models.Contact{},)
+    err = db.AutoMigrate(&models.User{}, &models.PasswordReset{}, &models.List{}, &models.Message{}, &models.Contact{}, &models.EmailChangeRequest{},)
     if err != nil {
         log.Fatalf("Migration failed: %v", err)
     }
@@ -94,7 +94,7 @@ func main() {
             }
         }
         c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
-        c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
         
         if c.Request.Method == "OPTIONS" {
             c.AbortWithStatus(http.StatusNoContent)
@@ -118,7 +118,7 @@ func main() {
     r.DELETE("/api/subscriber/remove/:list_id", func(c *gin.Context) { contact.ContactUnSubscribe(c, db) })
     
     r.GET("/api/list/:list_id", func(c *gin.Context) { list.GetListPublicName(c, db )})
-
+    r.PUT("/user/change/email/confirm", func(c*gin.Context) {user.ChangeEmailConfirm(c, db) })
 
     protected := r.Group("/api")
     protected.Use(middleware.AuthMiddleware())
@@ -128,7 +128,7 @@ func main() {
         
         protected.POST("/user/cycle-token", func(c *gin.Context) { auth.CycleToken(c, db) })
         protected.PUT("/user/change/username", func(c*gin.Context) {user.ChangeUsername(c, db) })
-        protected.PUT("/user/change/email", func(c*gin.Context) {user.ChangeEmail(c, db) })
+        protected.PATCH("/user/change/email", func(c*gin.Context) {user.ChangeEmail(c, db) })
         protected.DELETE("/user/account/delete", func(c*gin.Context) {user.DeleteAccount(c, db) })
 
         protected.POST("/list/create", func(c *gin.Context) { list.CreateList(c, db) })

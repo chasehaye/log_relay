@@ -43,6 +43,16 @@ type PasswordReset struct {
     User      User      `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
+type EmailChangeRequest struct {
+    gorm.Model
+    UserID    uint      `gorm:"index"`
+    NewEmail  string    `gorm:"type:varchar(255);not null"`
+    Token     string    `gorm:"uniqueIndex"`
+    ExpiresAt time.Time `gorm:"index"`
+    Used      bool      `gorm:"default:false"`
+    User      User      `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+}
+
 type List struct {
     ID                uint       `gorm:"primarykey"`
     CreatedAt         time.Time
