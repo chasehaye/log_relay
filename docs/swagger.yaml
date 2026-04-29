@@ -263,6 +263,11 @@ definitions:
         example: Operation successful
         type: string
     type: object
+  internal_handlers_user.ChangeEmailConfirmInput:
+    properties:
+      token:
+        type: string
+    type: object
   internal_handlers_user.ChangeEmailInput:
     properties:
       email:
@@ -979,9 +984,9 @@ paths:
     patch:
       consumes:
       - application/json
-      description: Updates the authenticated user's email address
+      description: Sends a confirmation email to complete the email change process
       parameters:
-      - description: New email
+      - description: New email address
         in: body
         name: input
         required: true
@@ -1002,10 +1007,6 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
         "409":
           description: Conflict
           schema:
@@ -1016,7 +1017,41 @@ paths:
             $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
       security:
       - BearerAuth: []
-      summary: Change email
+      summary: Request email change
+      tags:
+      - user
+  /user/change/email/confirm:
+    put:
+      consumes:
+      - application/json
+      description: Validates token and updates user email
+      parameters:
+      - description: Email change token
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers_user.ChangeEmailConfirmInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers_user.SuccessMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      summary: Confirm email change
       tags:
       - user
   /user/change/username:

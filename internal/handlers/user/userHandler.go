@@ -93,13 +93,12 @@ func ChangeUsername(c *gin.Context, db *gorm.DB) {
 // @Produce      json
 // @Security     BearerAuth
 // @Param        input  body      ChangeEmailInput  true  "New email address"
-// @Success 200 {object} SuccessMessageResponse
-// @Failure 400 {object} dtos.ValidationErrorResponse
-// @Failure 401 {object} dtos.UnauthorizedResponse
-// @Failure 404 {object} dtos.NotFoundErrorResponse
-// @Failure 409 {object} dtos.AlreadyExistsResponse
-// @Failure 500 {object} dtos.ServerErrorResponse
-// @Router /user/change/email [patch]
+// @Success      200    {object}  SuccessMessageResponse
+// @Failure      400    {object}  dtos.ValidationErrorResponse
+// @Failure      401    {object}  dtos.UnauthorizedResponse
+// @Failure      409    {object}  dtos.AlreadyExistsResponse
+// @Failure      500    {object}  dtos.ServerErrorResponse
+// @Router       /user/change/email [patch]
 func ChangeEmail(c *gin.Context, db *gorm.DB) {
 	var input ChangeEmailInput
 
@@ -166,7 +165,18 @@ func ChangeEmail(c *gin.Context, db *gorm.DB) {
 	})
 }
 
-
+// ChangeEmailConfirm godoc
+// @Summary      Confirm email change
+// @Description  Validates token and updates user email
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Param        input  body      ChangeEmailConfirmInput  true  "Email change token"
+// @Success      200    {object}  SuccessMessageResponse
+// @Failure      400    {object}  dtos.ValidationErrorResponse
+// @Failure      404    {object}  dtos.NotFoundErrorResponse
+// @Failure      500    {object}  dtos.ServerErrorResponse
+// @Router       /user/change/email/confirm [put]
 func ChangeEmailConfirm(c *gin.Context, db *gorm.DB) {
 	var input ChangeEmailConfirmInput
 

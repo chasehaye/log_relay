@@ -959,7 +959,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Updates the authenticated user's email address",
+                "description": "Sends a confirmation email to complete the email change process",
                 "consumes": [
                     "application/json"
                 ],
@@ -969,10 +969,10 @@
                 "tags": [
                     "user"
                 ],
-                "summary": "Change email",
+                "summary": "Request email change",
                 "parameters": [
                     {
-                        "description": "New email",
+                        "description": "New email address",
                         "name": "input",
                         "in": "body",
                         "required": true,
@@ -1000,16 +1000,62 @@
                             "$ref": "#/definitions/log_relay_internal_dtos.UnauthorizedResponse"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/log_relay_internal_dtos.NotFoundErrorResponse"
-                        }
-                    },
                     "409": {
                         "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/log_relay_internal_dtos.AlreadyExistsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/change/email/confirm": {
+            "put": {
+                "description": "Validates token and updates user email",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Confirm email change",
+                "parameters": [
+                    {
+                        "description": "Email change token",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_user.ChangeEmailConfirmInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_user.SuccessMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ValidationErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.NotFoundErrorResponse"
                         }
                     },
                     "500": {
@@ -1470,6 +1516,14 @@
                 "message": {
                     "type": "string",
                     "example": "Operation successful"
+                }
+            }
+        },
+        "internal_handlers_user.ChangeEmailConfirmInput": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
                 }
             }
         },
