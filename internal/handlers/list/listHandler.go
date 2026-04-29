@@ -2,6 +2,7 @@ package list
 
 import (
 	"net/http"
+    "errors"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -292,4 +293,39 @@ func GetListDetail(c *gin.Context, db *gorm.DB){
 
 
 	c.JSON(http.StatusOK, response)
+}
+
+// GetListPublicName godoc
+// @Summary      Get public mailing list name
+// @Description  Returns the public-facing name of a mailing list by its public ID
+// @Tags         lists
+// @Accept       json
+// @Produce      json
+// @Param        list_id  path      string  true  "Public List ID"
+// @Success      200  {object}  ListPublicNameResponse
+// @Failure      404  {object}  dtos.NotFoundErrorResponse
+// @Failure      500  {object}  dtos.ServerErrorResponse
+// @Router       /api/lists/{list_id} [get]
+func GetListPublicName(c *gin.Context, db *gorm.DB){
+    listID := c.Param("list_id")
+
+    var list models.List
+    err := db.Select("public_facing_name").Where("public_id = ?", listID).First(&list).Error
+    if err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            c.JSON(http.StatusNotFound, dtos.NotFoundErrorResponse{
+                Error: "List name not found",
+            })
+            return
+        }
+
+        c.JSON(http.StatusInternalServerError, dtos.ServerErrorResponse{
+            Error: "Database error",
+        })
+        return
+    }
+
+    c.JSON(http.StatusOK, ListPublicNameResponse{
+        Name: list.PublicFacingName,
+    })
 }

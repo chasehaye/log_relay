@@ -107,16 +107,17 @@ func main() {
         r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
     }
 
-    r.GET("/status", func(c *gin.Context) {handlers.Ping(c, db)})
-    r.POST("/api/user/register", func(c *gin.Context) {auth.CreateUser(c, db)})
-    r.POST("/api/user/login", func(c *gin.Context) {auth.LoginUser(c, db)})
-    r.POST("/api/user/forgot-password", func(c *gin.Context) {auth.ForgotPassword(c, db)})
-    r.POST("/api/user/change-password/:token", func(c *gin.Context) {auth.ResetPassword(c, db)})
+    r.GET("/status", func(c *gin.Context) {handlers.Ping(c, db) })
+    r.POST("/api/user/register", func(c *gin.Context) {auth.CreateUser(c, db) })
+    r.POST("/api/user/login", func(c *gin.Context) {auth.LoginUser(c, db) })
+    r.POST("/api/user/forgot-password", func(c *gin.Context) {auth.ForgotPassword(c, db) })
+    r.POST("/api/user/change-password/:token", func(c *gin.Context) {auth.ResetPassword(c, db) })
 
-    r.POST("/api/subscriber/signup/:list_id", func(c *gin.Context) { contact.ContactSubscribe(c, db)})
-    r.GET("/api/subscriber/signup/confirm", func(c *gin.Context) { contact.ContactSubscribeConfirm(c, db)})
-    // implement by adding a link to the front end to sub from mailing list
-    r.DELETE("/api/subscriber/remove/:list_id/confirm/:token", func(c *gin.Context) { contact.ContactUnSubscribe(c, db)})
+    r.POST("/api/subscriber/signup/:list_id", func(c *gin.Context) { contact.ContactSubscribe(c, db) })
+    r.GET("/api/subscriber/signup/confirm", func(c *gin.Context) { contact.ContactSubscribeConfirm(c, db) })
+    r.DELETE("/api/subscriber/remove/:list_id", func(c *gin.Context) { contact.ContactUnSubscribe(c, db) })
+    
+    r.GET("/api/list/:list_id", func(c *gin.Context) { list.GetListPublicName(c, db )})
 
 
     protected := r.Group("/api")

@@ -1,9 +1,21 @@
 package services
 
 import(
+    "os"
+    "strings"
+    "fmt"
+
     "gorm.io/gorm"
 	"log_relay/internal/models"
 )
+
+var (
+    frontendURL string
+)
+
+func init() {
+    frontendURL = strings.TrimSuffix(os.Getenv("FRONTEND_URL"), "/")
+}
 
 func SendMailingList(messageID uint, db *gorm.DB) {
     var message models.Message
@@ -18,6 +30,12 @@ func SendMailingList(messageID uint, db *gorm.DB) {
     }
 
     for _, c := range list.Subscribers {
-        SendMail(c.Email, message.Header, message.Body)
+        unsubLink := fmt.Sprintf(
+            "%s/unsubscribe?list=%s&token=%s",
+            frontendURL,
+            list.PublicID,
+            c.UnSubToken,
+        )
+        SendMailListItem(c.Email, message.Header, message.Body, unsubLink)
     }
 }

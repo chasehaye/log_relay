@@ -56,3 +56,43 @@ func SendMail(to, subject, body string) error {
 	
 	return nil
 }
+
+// append the mail unsub to the end of the body 
+
+func SendMailListItem(to, subject, body string, unsubLink string) error {
+	htmlBody := fmt.Sprintf(`
+	%s
+	<br><br>
+	<hr>
+	<p style="font-size:12px;color:gray;">
+	If you no longer want to receive these emails,
+	<a href="%s">unsubscribe here</a>.
+	</p>
+	`, body, unsubLink)
+
+	input := &ses.SendEmailInput{
+		Source: &senderAddress,
+		Destination: &types.Destination{
+			ToAddresses: []string{to},
+		},
+		Message: &types.Message{
+			Subject: &types.Content{
+				Data: &subject,
+			},
+			Body: &types.Body{
+				Html: &types.Content{
+					Data: &htmlBody,
+				},
+			},
+		},
+	}
+
+	_, err := sesClient.SendEmail(context.TODO(), input)
+
+	if err != nil {
+		fmt.Printf("SES ERROR: %v\n", err)
+		return fmt.Errorf("ses send failed: %w", err)
+	}
+	
+	return nil
+}

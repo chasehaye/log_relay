@@ -230,6 +230,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/lists/{list_id}": {
+            "get": {
+                "description": "Returns the public-facing name of a mailing list by its public ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lists"
+                ],
+                "summary": "Get public mailing list name",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Public List ID",
+                        "name": "list_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_list.ListPublicNameResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.NotFoundErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/mail/send/{list_id}": {
             "post": {
                 "description": "Creates a message and queues it for sending to all subscribers in a list",
@@ -295,7 +339,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/subscriber/remove/{list_id}/confirm{token}": {
+        "/api/subscriber/remove/{list_id}": {
             "delete": {
                 "description": "Removes a contact from a mailing list using unsubscribe token",
                 "consumes": [
@@ -317,11 +361,13 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "Unsubscribe Token",
-                        "name": "token",
-                        "in": "path",
-                        "required": true
+                        "description": "Unsubscribe payload",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_contact.UnsubscribeInput"
+                        }
                     }
                 ],
                 "responses": {
@@ -1248,6 +1294,14 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_handlers_contact.UnsubscribeInput": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_handlers_contact.UnsubscribeResponse": {
             "type": "object",
             "properties": {
@@ -1340,6 +1394,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "public_facing_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_handlers_list.ListPublicNameResponse": {
+            "type": "object",
+            "properties": {
+                "name": {
                     "type": "string"
                 }
             }

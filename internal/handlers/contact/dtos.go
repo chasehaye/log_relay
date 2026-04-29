@@ -4,6 +4,10 @@ type EmailInput struct {
 	Email string `json:"email" binding:"required"`
 }
 
+type UnsubscribeInput struct {
+	Token string `json:"token"`
+}
+
 type SuccessResponse struct {
 	Message string `json:"message" example:"Operation successful"`
 }

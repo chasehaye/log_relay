@@ -198,15 +198,21 @@ func ContactSubscribeConfirm(c *gin.Context, db *gorm.DB) {
 // @Accept       json
 // @Produce      json
 // @Param        list_id  path      string  true  "Public List ID"
-// @Param        token    path      string  true  "Unsubscribe Token"
+// @Param        input    body      UnsubscribeInput   true  "Unsubscribe payload"
 // @Success      200  {object}  UnsubscribeResponse
 // @Failure      401  {object}  dtos.UnauthorizedResponse
 // @Failure      404  {object}  dtos.NotFoundErrorResponse
 // @Failure      500  {object}  dtos.ServerErrorResponse
-// @Router       /api/subscriber/remove/{list_id}/confirm{token} [delete]
+// @Router       /api/subscriber/remove/{list_id} [delete]
 func ContactUnSubscribe(c *gin.Context, db *gorm.DB) {
 	publicID := c.Param("list_id")
-	token := c.Param("token")
+	var input UnsubscribeInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+		})
+		return
+	}
 
 	var list models.List
     if err := db.Where("public_id = ?", publicID).First(&list).Error; err != nil {
@@ -216,7 +222,7 @@ func ContactUnSubscribe(c *gin.Context, db *gorm.DB) {
         return
     }
 	var contact models.Contact
-    if err := db.Where("un_sub_token = ?", token).First(&contact).Error; err != nil {
+    if err := db.Where("un_sub_token = ?", input.Token).First(&contact).Error; err != nil {
         c.JSON(http.StatusUnauthorized, dtos.UnauthorizedResponse{
 			Error: "Invalid unsubscribe link",
 		})

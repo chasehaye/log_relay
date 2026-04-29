@@ -62,3 +62,7 @@ type MessageResponse struct {
 type ContactResponse struct {
 	Email string `json:"email"`
 }
+
+type ListPublicNameResponse struct {
+	Name string `json:"name"`
+}
