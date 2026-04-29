@@ -17,6 +17,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            set -e
             APP_DIR="${{ secrets.APP_DIR }}"
             cd "$APP_DIR"
             git pull origin main
