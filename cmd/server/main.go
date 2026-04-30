@@ -118,7 +118,7 @@ func main() {
     r.DELETE("/api/subscriber/remove/:list_id", func(c *gin.Context) { contact.ContactUnSubscribe(c, db) })
     
     r.GET("/api/list/:list_id", func(c *gin.Context) { list.GetListPublicName(c, db )})
-    r.PUT("/user/change/email/confirm", func(c*gin.Context) {user.ChangeEmailConfirm(c, db) })
+    r.PUT("/api/user/change/email/confirm", func(c*gin.Context) {user.ChangeEmailConfirm(c, db) })
 
     protected := r.Group("/api")
     protected.Use(middleware.AuthMiddleware())

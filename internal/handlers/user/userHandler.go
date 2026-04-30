@@ -40,7 +40,7 @@ func init() {
 // @Failure 401 {object} dtos.UnauthorizedResponse
 // @Failure 404 {object} dtos.NotFoundErrorResponse
 // @Failure 500 {object} dtos.ServerErrorResponse
-// @Router /user/change/username [patch]
+// @Router /api/user/change/username [put]
 func ChangeUsername(c *gin.Context, db *gorm.DB) {
 	var input ChangeUsernameInput
 
@@ -98,7 +98,7 @@ func ChangeUsername(c *gin.Context, db *gorm.DB) {
 // @Failure      401    {object}  dtos.UnauthorizedResponse
 // @Failure      409    {object}  dtos.AlreadyExistsResponse
 // @Failure      500    {object}  dtos.ServerErrorResponse
-// @Router       /user/change/email [patch]
+// @Router       /api/user/change/email [patch]
 func ChangeEmail(c *gin.Context, db *gorm.DB) {
 	var input ChangeEmailInput
 
@@ -176,7 +176,7 @@ func ChangeEmail(c *gin.Context, db *gorm.DB) {
 // @Failure      400    {object}  dtos.ValidationErrorResponse
 // @Failure      404    {object}  dtos.NotFoundErrorResponse
 // @Failure      500    {object}  dtos.ServerErrorResponse
-// @Router       /user/change/email/confirm [put]
+// @Router       /api/user/change/email/confirm [put]
 func ChangeEmailConfirm(c *gin.Context, db *gorm.DB) {
 	var input ChangeEmailConfirmInput
 
@@ -199,12 +199,12 @@ func ChangeEmailConfirm(c *gin.Context, db *gorm.DB) {
 	}
 
 	if req.Used {
-		c.JSON(http.StatusBadRequest, dtos.ValidationErrorResponse{
-			Error: "Token already used",
+		c.JSON(http.StatusOK, SuccessMessageResponse{
+			Message: "Email already updated",
 		})
 		return
 	}
-
+	
 	if time.Now().After(req.ExpiresAt) {
 		c.JSON(http.StatusBadRequest, dtos.ValidationErrorResponse{
 			Error: "Token expired",
@@ -257,7 +257,7 @@ func ChangeEmailConfirm(c *gin.Context, db *gorm.DB) {
 // @Failure 401 {object} dtos.UnauthorizedResponse
 // @Failure 404 {object} dtos.NotFoundErrorResponse
 // @Failure 500 {object} dtos.ServerErrorResponse
-// @Router /user/account/delete [delete]
+// @Router /api/user/account/delete [delete]
 func DeleteAccount(c *gin.Context, db *gorm.DB) {
 	var input PasswordInput
 	if err := c.ShouldBindJSON(&input); err != nil {

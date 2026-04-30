@@ -141,11 +141,11 @@ func ContactSubscribeConfirm(c *gin.Context, db *gorm.DB) {
 
 	var contact models.Contact
     if err := db.Where("verification_token = ?", token).First(&contact).Error; err != nil {
-        c.JSON(http.StatusUnauthorized, dtos.UnauthorizedResponse{
-			Error: "Invalid or expired confirmation link",
+		c.JSON(http.StatusOK, SubscribeConfirmResponse{
+			Message: "Already confirmed or invalid link",
 		})
-        return
-    }
+		return
+	}
 
 	if time.Now().After(contact.TokenExpiresAt) {
 		c.JSON(http.StatusGone, dtos.ServerErrorResponse{
@@ -161,9 +161,11 @@ func ContactSubscribeConfirm(c *gin.Context, db *gorm.DB) {
     }
 
 	err := db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&list).Association("Subscribers").Append(&contact); err != nil {
+		err := tx.Model(&list).Association("Subscribers").Append(&contact)
+		if err != nil {
 			return err
 		}
+		
 		updates := map[string]interface{}{
 			"verified":           true,
 			"verification_token": "",

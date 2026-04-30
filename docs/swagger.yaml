@@ -695,6 +695,47 @@ paths:
       summary: Confirm subscription
       tags:
       - subscribe
+  /api/user/account/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Permanently deletes the authenticated user's account after verifying
+        password
+      parameters:
+      - description: User password confirmation
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers_user.PasswordInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers_user.SuccessMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete user account
+      tags:
+      - user
   /api/user/change-password/{token}:
     post:
       consumes:
@@ -736,6 +777,120 @@ paths:
       summary: Change Password
       tags:
       - accounts
+  /api/user/change/email:
+    patch:
+      consumes:
+      - application/json
+      description: Sends a confirmation email to complete the email change process
+      parameters:
+      - description: New email address
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers_user.ChangeEmailInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers_user.SuccessMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.AlreadyExistsResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Request email change
+      tags:
+      - user
+  /api/user/change/email/confirm:
+    put:
+      consumes:
+      - application/json
+      description: Validates token and updates user email
+      parameters:
+      - description: Email change token
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers_user.ChangeEmailConfirmInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers_user.SuccessMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      summary: Confirm email change
+      tags:
+      - user
+  /api/user/change/username:
+    put:
+      consumes:
+      - application/json
+      description: Updates the authenticated user's display name
+      parameters:
+      - description: New username
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers_user.ChangeUsernameInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers_user.SuccessMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Change username
+      tags:
+      - user
   /api/user/cycle-token:
     post:
       consumes:
@@ -939,159 +1094,4 @@ paths:
       summary: Health Check
       tags:
       - system
-  /user/account/delete:
-    delete:
-      consumes:
-      - application/json
-      description: Permanently deletes the authenticated user's account after verifying
-        password
-      parameters:
-      - description: User password confirmation
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/internal_handlers_user.PasswordInput'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/internal_handlers_user.SuccessMessageResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Delete user account
-      tags:
-      - user
-  /user/change/email:
-    patch:
-      consumes:
-      - application/json
-      description: Sends a confirmation email to complete the email change process
-      parameters:
-      - description: New email address
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/internal_handlers_user.ChangeEmailInput'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/internal_handlers_user.SuccessMessageResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
-        "409":
-          description: Conflict
-          schema:
-            $ref: '#/definitions/log_relay_internal_dtos.AlreadyExistsResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Request email change
-      tags:
-      - user
-  /user/change/email/confirm:
-    put:
-      consumes:
-      - application/json
-      description: Validates token and updates user email
-      parameters:
-      - description: Email change token
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/internal_handlers_user.ChangeEmailConfirmInput'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/internal_handlers_user.SuccessMessageResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
-      summary: Confirm email change
-      tags:
-      - user
-  /user/change/username:
-    patch:
-      consumes:
-      - application/json
-      description: Updates the authenticated user's display name
-      parameters:
-      - description: New username
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/internal_handlers_user.ChangeUsernameInput'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/internal_handlers_user.SuccessMessageResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Change username
-      tags:
-      - user
 swagger: "2.0"
