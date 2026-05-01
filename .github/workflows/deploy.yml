@@ -20,5 +20,11 @@ jobs:
             set -e
             APP_DIR="${{ secrets.APP_DIR }}"
             cd "$APP_DIR"
+            
+            echo "Pulling latest code..."
             git pull origin main
-            ./build_and_run.sh
+
+            echo "Building and restarting containers..."
+            docker compose up -d --build
+            
+            echo "Deployment complete."
