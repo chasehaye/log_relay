@@ -85,7 +85,6 @@ func main() {
         allowedOrigins := []string{
             os.Getenv("FRONTEND_URL"),
             os.Getenv("FRONTEND_URL2"),
-            os.Getenv("FRONTEND_URL3"),
         }
         for _, o := range allowedOrigins {
             if o == origin {
