@@ -21,7 +21,6 @@ jobs:
             APP_DIR="${{ secrets.APP_DIR }}"
             cd "$APP_DIR"
             
-            
             echo "Pulling latest code..."
             git pull origin main
 
