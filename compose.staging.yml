@@ -1,0 +1,31 @@
+name: fude-software-back-staging
+services:
+  database:
+    image: postgres:18
+    container_name: log_relay-pg-staging
+    networks:
+      - fude_bridge
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: log_relay
+      POSTGRES_USER: log_relay
+      POSTGRES_PASSWORD: devpass
+    volumes:
+      - /mnt/drive1/postgres_data:/var/lib/postgresql/data
+  log_relay:
+    build: .
+    container_name: log_relay-svc-staging
+    depends_on: 
+      - database
+    networks:
+      - fude_bridge
+    ports:
+      - "30001:30000"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+networks:
+  fude_bridge: {}
+

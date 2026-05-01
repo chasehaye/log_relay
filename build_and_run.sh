@@ -1,17 +1,10 @@
 #!/bin/sh
-
 set -e
 
 cd /srv/webserver-back/fudesoftware/
 
-echo "Building the application..."
-go build -o ./build/main ./cmd/server/main.go
+echo "Deploying PRODUCTION..."
 
-echo "Stopping old process..."
-pkill main || true
+docker compose up -d --build
 
-echo "Starting new process..."
-
-nohup ./build/main > ./build/server.log 2>&1 &
-
-echo "Server started. Logs at ./build/server.log"
+echo "Done."
