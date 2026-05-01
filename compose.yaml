@@ -1,31 +1,51 @@
 name: fude-software-back
+
 services:
   database:
     image: postgres:18
     container_name: log_relay-pg
-    networks:
-      - fude_bridge
-    ports:
-      - "5432:5432"
+
     environment:
       POSTGRES_DB: log_relay
       POSTGRES_USER: log_relay
       POSTGRES_PASSWORD: devpass
+
     volumes:
       - /mnt/drive1/postgres_data:/var/lib/postgresql/data
-  log_relay:
-    build: .
-    container_name: log_relay-svc
-    depends_on: 
-      - database
+
     networks:
       - fude_bridge
+      
+    ports:
+      - "5432:5432"
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U log_relay"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+    log_relay:
+    build: .
+
+    container_name: log_relay-svc
+
+    depends_on: 
+      database:
+        condition: service_healthy
+
+    networks:
+      - fude_bridge
+
     ports:
       - "30000:30000"
+
     env_file:
       - .env
+
     restart: unless-stopped
 
 networks:
-  fude_bridge: {}
-
+  fude_bridge:
+    driver: bridge
