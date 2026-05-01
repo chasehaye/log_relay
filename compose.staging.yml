@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: devpass
 
     volumes:
-        - /mnt/drive1/postgres_data_test:/var/lib/postgresql
+        - /var/lib/postgresql
 
     networks:
       - fude_bridge
