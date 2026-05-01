@@ -3,16 +3,16 @@ services:
   database:
     image: postgres:18
     container_name: log_relay-pg-staging
-    networks:
-      - fude_bridge
-    ports:
-      - "5433:5432"
     environment:
       POSTGRES_DB: log_relay
       POSTGRES_USER: log_relay
       POSTGRES_PASSWORD: devpass
     volumes:
-      - /mnt/drive1/postgres_data:/var/lib/postgresql/data
+      - /mnt/drive1/postgres_data:/var/lib/postgresql
+    networks:
+      - fude_bridge
+    ports:
+      - "5433:5432"
   log_relay:
     build: .
     container_name: log_relay-svc-staging
