@@ -39,7 +39,7 @@ jobs:
             echo "Building and starting STAGING environment..."
             docker compose -f compose.staging.yml up -d --build
 
-            echo "Staging deployment complete."
+            echo "Staging complete."
             
             echo "Scheduling shutdown in 59 minutes..."
             (sleep 3540 && cd "$APP_DIR" && docker compose -f compose.staging.yml down) &
