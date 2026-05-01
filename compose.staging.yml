@@ -28,4 +28,3 @@ services:
 
 networks:
   fude_bridge: {}
-
