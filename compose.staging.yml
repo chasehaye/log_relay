@@ -6,7 +6,7 @@ services:
     networks:
       - fude_bridge
     ports:
-      - "5433:5433"
+      - "5433:5432"
     environment:
       POSTGRES_DB: log_relay
       POSTGRES_USER: log_relay
