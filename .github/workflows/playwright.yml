@@ -1,0 +1,60 @@
+name: Playwright Tests Staging
+
+on:
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  deploy-staging:
+    timeout-minutes: 200
+    runs-on: ubuntu-latest
+
+    steps:
+      # -------------------------
+      # 1. DEPLOY STAGING
+      # -------------------------
+      - name: Deploy STAGING via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+
+            APP_DIR="${{ secrets.APP_DIR }}"
+            cd "$APP_DIR"
+
+            echo "Checking out PR branch..."
+            git fetch origin ${{ github.head_ref }}
+            git checkout ${{ github.head_ref }}
+
+            echo "Resetting to latest PR state..."
+            git reset --hard origin/${{ github.head_ref }}
+
+            echo "Testing staging compose file..."
+            docker compose -f compose.staging.yml config
+
+            echo "Building and starting STAGING environment..."
+            docker compose -f compose.staging.yml up -d --build
+
+            echo "Staging deployment complete."
+
+      # -------------------------
+      # 2. CLEANUP (ALWAYS RUN)
+      # -------------------------
+      - name: Stop staging environment
+        if: always()
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -e
+
+            APP_DIR="${{ secrets.APP_DIR }}"
+            cd "$APP_DIR"
+
+            echo "Stopping staging environment..."
+            docker compose -f compose.staging.yml down
