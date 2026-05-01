@@ -20,6 +20,9 @@ jobs:
             set -e
             APP_DIR="${{ secrets.APP_DIR }}"
             cd "$APP_DIR"
+
+            echo "Testing raw internet connectivity (ping 8.8.8.8)..."
+            docker run --rm golang:1.26 ping -c 3 8.8.8.8
             
             echo "Pulling latest code..."
             git pull origin main
