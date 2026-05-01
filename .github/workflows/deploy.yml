@@ -24,7 +24,10 @@ jobs:
             echo "Pulling latest code..."
             git pull origin main
 
+            echo "Testing environment..."
+            docker compose config
+
             echo "Building and restarting containers..."
             docker compose up -d --build
-            
+
             echo "Deployment complete."
