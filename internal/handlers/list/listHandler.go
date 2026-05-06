@@ -272,6 +272,7 @@ func GetListDetail(c *gin.Context, db *gorm.DB){
 		PublicID:         list.PublicID,
 		UserID:           list.UserID,
         CreatedAt:        list.CreatedAt,
+        UpdatedAt: list.UpdatedAt,
 	}
 
     response.Messages = make([]MessageResponse, 0, len(list.Messages))

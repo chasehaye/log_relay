@@ -4,6 +4,7 @@ import(
 	"net/http"
 	"strconv"
 
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
@@ -75,6 +76,9 @@ func SendMailingListMessage(c *gin.Context, db *gorm.DB) {
 		})
 		return
 	}
+	db.Model(&models.List{}).
+    Where("id = ?", list.ID).
+    Update("updated_at", gorm.Expr("NOW()"))
 
 	c.JSON(http.StatusCreated, SuccessMessageResponse{
 		Message: "Message created and queued for sending",

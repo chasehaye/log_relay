@@ -48,6 +48,7 @@ type ListDetailResponse struct {
 	PublicID         string    `json:"public_id"`
 	UserID           uint      `json:"user_id"`
     CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
 	
 	Messages    []MessageResponse   `json:"messages,omitempty"`
 	Subscribers []ContactResponse   `json:"subscribers,omitempty"`
