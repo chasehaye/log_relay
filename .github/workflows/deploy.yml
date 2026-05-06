@@ -24,11 +24,14 @@ jobs:
             echo "Pulling latest code..."
             git pull origin main
 
-            echo "Testing environment..."
-            docker compose config
+            echo "Stopping and removing old containers..."
+            docker compose down --remove-orphans
 
-            echo "Building and restarting containers..."
-            docker compose up -d --build
+            echo "Pruning unused images..."
+            docker image prune -af
+
+            echo "Building and starting fresh containers..."
+            docker compose up -d --build --force-recreate
 
             echo "Deployment complete."
             

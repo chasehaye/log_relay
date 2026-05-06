@@ -37,6 +37,7 @@ services:
 
     networks:
       - fude_bridge
+      - aws-net
 
     ports:
       - "30001:30000"
@@ -50,3 +51,5 @@ services:
 networks:
   fude_bridge:
     driver: bridge
+  aws-net:
+    external: true

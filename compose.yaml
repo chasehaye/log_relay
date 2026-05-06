@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: devpass
 
     volumes:
-      - /mnt/drive1/postgres_data_prod:/var/lib/postgresql
+      - /mnt/drive1/postgres_data_prod:/var/lib/postgresql/data
 
     networks:
       - fude_bridge
@@ -37,6 +37,7 @@ services:
 
     networks:
       - fude_bridge
+      - aws-net
 
     ports:
       - "30000:30000"
@@ -49,3 +50,5 @@ services:
 networks:
   fude_bridge:
     driver: bridge
+  aws-net:
+    external: true

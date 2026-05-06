@@ -14,6 +14,13 @@ FROM debian:bookworm-slim
 
 WORKDIR /app
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        iputils-ping && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY --from=builder /app/server /app/server
 
 EXPOSE 30000
