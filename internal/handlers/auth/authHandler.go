@@ -14,7 +14,7 @@ import (
 
 	"log_relay/internal/crypt"
 	"log_relay/internal/dtos"
-	"log_relay/internal/messaging"
+	"log_relay/internal/templates"
 	"log_relay/internal/models"
 	"log_relay/internal/validation"
     "log_relay/internal/config"
@@ -333,7 +333,7 @@ func ForgotPassword(c *gin.Context, db *gorm.DB){
     frontendURL := strings.TrimSuffix(os.Getenv("FRONTEND_URL"), "/")
     resetLink := fmt.Sprintf("%s/reset-password/%s", frontendURL, token)
     
-    if err := messaging.SendResetEmail(cleanEmail, resetLink); err != nil {
+    if err := templates.SendResetEmail(cleanEmail, resetLink); err != nil {
         log.Printf("Failed to send reset email to %s: %v", cleanEmail, err)
         db.Delete(&resetRecord)
         c.JSON(http.StatusOK, ForgotPasswordResponse{Message: "Check your inbox for a reset link"})

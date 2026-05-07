@@ -181,6 +181,8 @@ definitions:
         items:
           $ref: '#/definitions/internal_handlers_list.ContactResponse'
         type: array
+      updated_at:
+        type: string
       user_id:
         type: integer
     type: object
@@ -246,6 +248,21 @@ definitions:
       message:
         example: Operation successful
         type: string
+    type: object
+  internal_handlers_messages.SendBugReportInput:
+    properties:
+      body:
+        type: string
+      email:
+        example: user@example.com
+        maxLength: 255
+        type: string
+      header:
+        type: string
+    required:
+    - body
+    - email
+    - header
     type: object
   internal_handlers_messages.SendMessageInput:
     properties:
@@ -563,6 +580,71 @@ paths:
       summary: Send message to mailing list
       tags:
       - messages
+  /api/send/message/{list_id}:
+    post:
+      consumes:
+      - application/json
+      description: Creates or reuses a contact and stores an inbound message associated
+        with a specific list
+      parameters:
+      - description: Public List ID
+        in: path
+        name: list_id
+        required: true
+        type: string
+      - description: Inbound message payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_handlers_messages.SendBugReportInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_handlers_messages.SuccessMessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ValidationErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.UnauthorizedResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ForbiddenResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.NotFoundErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/log_relay_internal_dtos.ServerErrorResponse'
+      summary: Send inbound message to a list
+      tags:
+      - messages
+  /api/status:
+    get:
+      description: Checks if the API and Database are reachable.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_handlers.StatusResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/internal_handlers.StatusResponse'
+      summary: Health Check
+      tags:
+      - system
   /api/subscriber/remove/{list_id}:
     delete:
       consumes:
@@ -1077,21 +1159,4 @@ paths:
       summary: Register New User
       tags:
       - accounts
-  /status:
-    get:
-      description: Checks if the API and Database are reachable.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/internal_handlers.StatusResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/internal_handlers.StatusResponse'
-      summary: Health Check
-      tags:
-      - system
 swagger: "2.0"

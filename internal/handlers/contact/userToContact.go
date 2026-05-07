@@ -11,7 +11,7 @@ import(
 
 	"log_relay/internal/models"
 	"log_relay/internal/validation"
-	"log_relay/internal/messaging"
+	"log_relay/internal/templates"
 	"log_relay/internal/dtos"
 	"log_relay/internal/crypt"
 )
@@ -93,7 +93,7 @@ func ContactSubscribe(c *gin.Context, db *gorm.DB) {
 	frontendURL := os.Getenv("FRONTEND_URL") 
     confirmLink := fmt.Sprintf("%s/confirm-subscription?token=%s&list_id=%s", frontendURL, token, publicID)
 
-    if err := messaging.SendConfirmationEmail(cleanEmail, confirmLink); err != nil {
+    if err := templates.SendConfirmationEmail(cleanEmail, confirmLink); err != nil {
         c.JSON(http.StatusServiceUnavailable, dtos.ServerErrorResponse{
 			Error: "Email service failed",
 		})

@@ -18,7 +18,7 @@ type StatusResponse struct {
 // @Produce      json
 // @Success      200  {object}  StatusResponse
 // @Failure      500  {object}  StatusResponse
-// @Router       /status [get]
+// @Router       /api/status [get]
 func Ping(c *gin.Context, db *gorm.DB) {
     sqlDB, err := db.DB()
     if err != nil || sqlDB.Ping() != nil {

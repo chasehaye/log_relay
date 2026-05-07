@@ -13,7 +13,7 @@ import (
 
 	"log_relay/internal/crypt"
 	"log_relay/internal/dtos"
-	"log_relay/internal/messaging"
+	"log_relay/internal/templates"
 	"log_relay/internal/models"
 	"log_relay/internal/validation"
 )
@@ -158,7 +158,7 @@ func ChangeEmail(c *gin.Context, db *gorm.DB) {
 	}
 	link := fmt.Sprintf("%s/change-email/confirm?token=%s", frontendURL, token)
 
-	err = messaging.SendResetEmailChangeEmail(cleanEmail, link)
+	err = templates.SendResetEmailChangeEmail(cleanEmail, link)
 
 	c.JSON(http.StatusOK, SuccessMessageResponse{
 		Message: "Confirmation sent check inbox",

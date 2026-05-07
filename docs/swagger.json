@@ -333,6 +333,103 @@
                 }
             }
         },
+        "/api/send/message/{list_id}": {
+            "post": {
+                "description": "Creates or reuses a contact and stores an inbound message associated with a specific list",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "messages"
+                ],
+                "summary": "Send inbound message to a list",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Public List ID",
+                        "name": "list_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Inbound message payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_messages.SendBugReportInput"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers_messages.SuccessMessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ValidationErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.UnauthorizedResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ForbiddenResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.NotFoundErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/log_relay_internal_dtos.ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/status": {
+            "get": {
+                "description": "Checks if the API and Database are reachable.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "Health Check",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.StatusResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/internal_handlers.StatusResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/subscriber/remove/{list_id}": {
             "delete": {
                 "description": "Removes a contact from a mailing list using unsubscribe token",
@@ -1103,32 +1200,6 @@
                     }
                 }
             }
-        },
-        "/status": {
-            "get": {
-                "description": "Checks if the API and Database are reachable.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "system"
-                ],
-                "summary": "Health Check",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/internal_handlers.StatusResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/internal_handlers.StatusResponse"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -1394,6 +1465,9 @@
                         "$ref": "#/definitions/internal_handlers_list.ContactResponse"
                     }
                 },
+                "updated_at": {
+                    "type": "string"
+                },
                 "user_id": {
                     "type": "integer"
                 }
@@ -1492,6 +1566,27 @@
                 "message": {
                     "type": "string",
                     "example": "Operation successful"
+                }
+            }
+        },
+        "internal_handlers_messages.SendBugReportInput": {
+            "type": "object",
+            "required": [
+                "body",
+                "email",
+                "header"
+            ],
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "example": "user@example.com"
+                },
+                "header": {
+                    "type": "string"
                 }
             }
         },
