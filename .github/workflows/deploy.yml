@@ -26,16 +26,15 @@ jobs:
             git reset --hard origin/main
             git clean -fd
 
-            echo "Stopping and removing old containers..."
-            docker compose down --remove-orphans
+            echo "==== STOPPING STACK ===="
+            docker compose down --remove-orphans --volumes
 
-            echo "Pruning unused images..."
-            docker image prune -af
+            echo "==== REMOVING PROJECT IMAGES ===="
+            docker compose build --no-cache
 
-            echo "Building and starting fresh containers..."
-            docker compose up -d --build --force-recreate
 
-            echo "Deployment complete."
-            
+            echo "==== STARTING FRESH BUILD ===="
+            docker compose up -d --force-recreate
 
-            
+            echo "==== DEPLOY COMPLETE ===="
+
