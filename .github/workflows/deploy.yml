@@ -22,7 +22,9 @@ jobs:
             cd "$APP_DIR"
             
             echo "Pulling latest code..."
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
 
             echo "Stopping and removing old containers..."
             docker compose down --remove-orphans
