@@ -15,7 +15,6 @@ import (
     "log_relay/internal/database"
     "log_relay/internal/models"
     "log_relay/internal/config"
-    "log_relay/internal/migrations"
     "log_relay/internal/router"
 )
 
