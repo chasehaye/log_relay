@@ -27,11 +27,10 @@ jobs:
             git clean -fd
 
             echo "==== STOPPING STACK ===="
-            docker compose down --remove-orphans --volumes
+            docker compose down --remove-orphans
 
             echo "==== REMOVING PROJECT IMAGES ===="
             docker compose build --no-cache
-
 
             echo "==== STARTING FRESH BUILD ===="
             docker compose up -d --force-recreate
