@@ -38,9 +38,6 @@ func main() {
     }
     defer sqlDB.Close()
     log.Println("--Database connection verified--")
-    if err := migrations.FixLegacyData(db); err != nil {
-        log.Fatalf("Legacy migration failed: %v", err)
-    }
 
     // ------------------ Migrate ------------------
     err = db.AutoMigrate(
