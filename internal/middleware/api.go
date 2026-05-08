@@ -8,6 +8,8 @@ import (
     "log_relay/internal/dtos"
 	"log"
 	"errors"
+    "crypto/sha256"
+    "encoding/hex"
 )
 
 
@@ -23,8 +25,10 @@ func ApiMiddleware(db *gorm.DB) gin.HandlerFunc {
             return
         }
 
+        hash := sha256.Sum256([]byte(apiKey))
+        hashedToken := hex.EncodeToString(hash[:])
         var user models.User
-        if err := db.Where("token = ?", apiKey).First(&user).Error; err != nil {
+        if err := db.Where("token = ?", hashedToken).First(&user).Error; err != nil {
             c.JSON(http.StatusUnauthorized, dtos.UnauthorizedResponse{
                 Error: "invalid api key",
             })

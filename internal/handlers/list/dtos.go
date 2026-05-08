@@ -11,7 +11,7 @@ type ListInput struct {
     PublicFacingName string `json:"public_facing_name" binding:"required"`
 }
 
-type listIndexQuery struct {
+type IndexQuery struct {
     CountPerPage int `form:"count_per_page" binding:"required,min=1,max=50"`
     Page         int `form:"page" binding:"required,min=1"`
 }

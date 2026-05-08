@@ -34,7 +34,7 @@ func CreateList(c *gin.Context, db *gorm.DB) {
             Error: "Failed: Incorrect input format follow the below specificatons",
             Details: map[string]string{
                 "name": "name is required",
-                "list_type": "list_type is required must be of type: 'MAILING', 'INQUIRY', 'SUPPORT', or 'CATCH_ALL'",
+                "list_type": "list_type is required must be of type: 'MAILING', 'INQUIRY', 'BUG', or 'CATCH_ALL'",
                 "public_facing_name": "pubic_facing_name is a required field",
             },
         })
@@ -147,7 +147,7 @@ func DeleteList(c *gin.Context, db *gorm.DB) {
 // @Failure      500 {object} dtos.ServerErrorResponse
 // @Router       /api/lists [get]
 func IndexList(c *gin.Context, db *gorm.DB) {
-    var input listIndexQuery
+    var input IndexQuery
     if err := c.ShouldBindQuery(&input); err != nil {
         c.JSON(http.StatusBadRequest, dtos.ValidationErrorResponse{
             Error: "Invalid query parameters",
@@ -169,7 +169,7 @@ func IndexList(c *gin.Context, db *gorm.DB) {
     userID := uidValue.(uint)
 
     var totalCount int64
-    db.Model(&models.List{}).Where("user_id = ?", userID).Count(&totalCount)
+    db.Model(&models.List{}).Where("user_id = ? AND list_type = ?", userID, models.ListTypeMailing).Count(&totalCount)
 
     totalPages := 0
     if totalCount > 0 {
@@ -186,7 +186,7 @@ func IndexList(c *gin.Context, db *gorm.DB) {
 
     countSubQuery := "(SELECT COUNT(*) FROM subscriber_list WHERE subscriber_list.list_id = lists.id) AS subscriber_count"
     
-    result := db.Where("user_id = ?", userID).
+    result := db.Where("user_id = ? AND list_type = ?", userID, models.ListTypeMailing).
 		Select("id", "name", "list_type", "public_facing_name", "public_id", "user_id", "created_at", "updated_at", countSubQuery).
 		Limit(input.CountPerPage).
 		Offset(offset).
@@ -328,5 +328,176 @@ func GetListPublicName(c *gin.Context, db *gorm.DB){
 
     c.JSON(http.StatusOK, ListPublicNameResponse{
         Name: list.PublicFacingName,
+    })
+}
+
+// IndexProjectBugReport godoc
+// @Summary      Get paginated bug report lists
+// @Description  Returns a paginated list of user bug report lists with metadata
+// @Tags         lists
+// @Accept       json
+// @Produce      json
+// @Param        count_per_page  query     int  true  "Number of items per page (1-50)"
+// @Param        page            query     int  true  "Page number (starts from 1)"
+// @Success      200 {object} ListIndexResponse
+// @Failure      400 {object} dtos.ValidationErrorResponse
+// @Failure      401 {object} dtos.UnauthorizedResponse
+// @Failure      500 {object} dtos.ServerErrorResponse
+// @Router       /api/list/index/project/bug-report [get]
+func IndexProjectBugReport(c *gin.Context, db *gorm.DB) {
+    var input IndexQuery
+    if err := c.ShouldBindQuery(&input); err != nil {
+        c.JSON(http.StatusBadRequest, dtos.ValidationErrorResponse{
+            Error: "Invalid query parameters",
+            Details: map[string]string{
+                "page":           "page is required and must be >= 1",
+                "count_per_page": "count_per_page is required and must be between 1 and 50",
+            },
+        })
+        return
+    }
+
+    uidValue, exists := c.Get("userID")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, dtos.UnauthorizedResponse{
+			Error: "Invalid session",
+		})
+        return
+    }
+    userID := uidValue.(uint)
+
+    var totalCount int64
+    db.Model(&models.List{}).Where("user_id = ? AND list_type = ?", userID, models.ListTypeBug).Count(&totalCount)
+
+    totalPages := 0
+    if totalCount > 0 {
+        totalPages = int(math.Ceil(float64(totalCount) / float64(input.CountPerPage)))
+    }
+
+    requestedPage := input.Page
+    if requestedPage > totalPages && totalPages > 0 {
+        requestedPage = totalPages
+    }
+
+    var lists []models.List
+    offset := (requestedPage - 1) * input.CountPerPage
+
+    result := db.Where("user_id = ? AND list_type = ?", userID, models.ListTypeBug).
+		Select("id", "name", "list_type", "public_facing_name", "public_id", "user_id", "created_at", "updated_at").
+		Limit(input.CountPerPage).
+		Offset(offset).
+		Order("updated_at DESC").
+		Find(&lists)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, dtos.ServerErrorResponse{
+			Error: "Database error",
+		})
+		return
+	}
+    converted := make([]ListResponse, len(lists))
+	for i, l := range lists {
+		converted[i] = ListResponse{
+			ID:               l.ID,
+			Name:             l.Name,
+			ListType:         string(l.ListType),
+			PublicFacingName: l.PublicFacingName,
+			PublicID:         l.PublicID,
+			UserID:           l.UserID,
+            CreatedAt:        l.CreatedAt, 
+		}
+	}
+
+	c.JSON(http.StatusOK, ListIndexResponse{
+		Lists:       converted,
+		TotalCount:  totalCount,
+		TotalPages:  totalPages,
+		CurrentPage: requestedPage,
+	})
+}
+
+// IndexProjectInquiry godoc
+// @Summary      Get paginated inquiry lists
+// @Description  Returns a paginated list of user inquiry lists with metadata
+// @Tags         lists
+// @Accept       json
+// @Produce      json
+// @Param        count_per_page  query     int  true  "Number of items per page (1-50)"
+// @Param        page            query     int  true  "Page number (starts from 1)"
+// @Success      200 {object} ListIndexResponse
+// @Failure      400 {object} dtos.ValidationErrorResponse
+// @Failure      401 {object} dtos.UnauthorizedResponse
+// @Failure      500 {object} dtos.ServerErrorResponse
+// @Router       /api/list/index/project/inquiry [get]
+func IndexProjectInquiry(c *gin.Context, db *gorm.DB) {
+    var input IndexQuery
+    if err := c.ShouldBindQuery(&input); err != nil {
+        c.JSON(http.StatusBadRequest, dtos.ValidationErrorResponse{
+            Error: "Invalid query parameters",
+            Details: map[string]string{
+                "page":           "page is required and must be >= 1",
+                "count_per_page": "count_per_page is required and must be between 1 and 50",
+            },
+        })
+        return
+    }
+
+    uidValue, exists := c.Get("userID")
+    if !exists {
+        c.JSON(http.StatusUnauthorized, dtos.UnauthorizedResponse{
+            Error: "Invalid session",
+        })
+        return
+    }
+    userID := uidValue.(uint)
+
+    var totalCount int64
+    db.Model(&models.List{}).Where("user_id = ? AND list_type = ?", userID, models.ListTypeInquiry).Count(&totalCount)
+
+    totalPages := 0
+    if totalCount > 0 {
+        totalPages = int(math.Ceil(float64(totalCount) / float64(input.CountPerPage)))
+    }
+
+    requestedPage := input.Page
+    if requestedPage > totalPages && totalPages > 0 {
+        requestedPage = totalPages
+    }
+
+    var lists []models.List
+    offset := (requestedPage - 1) * input.CountPerPage
+
+    result := db.Where("user_id = ? AND list_type = ?", userID, models.ListTypeInquiry).
+        Select("id", "name", "list_type", "public_facing_name", "public_id", "user_id", "created_at", "updated_at").
+        Limit(input.CountPerPage).
+        Offset(offset).
+        Order("updated_at DESC").
+        Find(&lists)
+
+    if result.Error != nil {
+        c.JSON(http.StatusInternalServerError, dtos.ServerErrorResponse{
+            Error: "Database error",
+        })
+        return
+    }
+
+    converted := make([]ListResponse, len(lists))
+    for i, l := range lists {
+        converted[i] = ListResponse{
+            ID:               l.ID,
+            Name:             l.Name,
+            ListType:         string(l.ListType),
+            PublicFacingName: l.PublicFacingName,
+            PublicID:         l.PublicID,
+            UserID:           l.UserID,
+            CreatedAt:        l.CreatedAt,
+        }
+    }
+
+    c.JSON(http.StatusOK, ListIndexResponse{
+        Lists:       converted,
+        TotalCount:  totalCount,
+        TotalPages:  totalPages,
+        CurrentPage: requestedPage,
     })
 }

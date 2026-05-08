@@ -28,6 +28,10 @@ func Protected(r *gin.Engine, db *gorm.DB) {
         protected.GET("/list/index", func(c *gin.Context) { list.IndexList(c, db) })
         protected.GET("/list/detail/:id", func(c *gin.Context) { list.GetListDetail(c, db) })
 
+        protected.GET("/list/index/project/bug-report", func(c *gin.Context) { list.IndexProjectBugReport(c, db) })
+        protected.GET("/list/index/project/inquiries", func(c *gin.Context) { list.IndexProjectInquiry(c, db) })
+
+
         protected.POST("/mail/send/:list_id", func(c *gin.Context) { messages.SendMailingListMessage(c, db) })
     }
 }

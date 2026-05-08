@@ -11,7 +11,6 @@ const (
 	ListTypeMailing   ListType = "MAILING"
 	ListTypeInquiry   ListType = "INQUIRY"
     ListTypeBug       ListType = "BUG"
-    ListTypeCatchAll  ListType = "CATCH_ALL"
 )
 
 type MessageType string

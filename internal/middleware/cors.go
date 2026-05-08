@@ -14,7 +14,7 @@ func CORSMiddleware() gin.HandlerFunc {
 
         if strings.HasPrefix(c.Request.URL.Path, "/api/public/") {
             c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-            c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+            c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Key")
             c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         } else {
             allowedOrigins := []string{
