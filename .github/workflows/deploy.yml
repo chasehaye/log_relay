@@ -36,4 +36,3 @@ jobs:
             docker compose up -d --force-recreate
 
             echo "==== DEPLOY COMPLETE ===="
-
